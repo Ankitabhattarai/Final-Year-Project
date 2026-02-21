@@ -47,6 +47,17 @@ const requireHospitalAdmin = (req, res, next) => {
   next();
 };
 
+// Verify system admin role
+const requireSystemAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. System admin role required.'
+    });
+  }
+  next();
+};
+
 // Verify user belongs to hospital (for hospital-scoped operations)
 const requireHospitalAccess = (req, res, next) => {
   if (!req.user.hospitalId) {
@@ -93,6 +104,7 @@ module.exports = {
   authenticate,
   requireHospitalAdmin,
   requireHospitalAccess,
+  requireSystemAdmin,
   requireRole,
   enforceHospitalScope
 };

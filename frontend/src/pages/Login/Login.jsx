@@ -1,7 +1,10 @@
 import React, { useState } from "react";
-import "./login.css";
+import { useApi } from "../../context/ApiContext";
+import { toast } from 'sonner';
+import "./Login.css";
 
 export default function Login({ onNavigateToSignup, onNavigateToLanding, onLoginSuccess }) {
+  const { apiFetch } = useApi();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -50,39 +53,34 @@ export default function Login({ onNavigateToSignup, onNavigateToLanding, onLogin
     setErrors({});
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const data = await apiFetch('/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
-
       if (data.success) {
-        // Check if user is a patient
-        if (data.user.role !== 'patient') {
-          setErrors({ general: 'This login is for patients only. Hospital staff should use the hospital admin login.' });
-          return;
-        }
-        
-        // Store token in localStorage
+        // Store token and user in localStorage
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        
+
         setSuccessMessage(`Welcome back, ${data.user.fullName}! Redirecting...`);
-        
-        // Redirect to dashboard after 1 second
+
+        // Redirect based on role
         setTimeout(() => {
-          onLoginSuccess();
+          if (data.user.role === 'doctor') {
+            onLoginSuccess('doctorDashboard');
+          } else if (data.user.role === 'admin' || data.user.role === 'hospital_admin') {
+            onLoginSuccess('adminDashboard');
+          } else {
+            onLoginSuccess('dashboard');
+          }
         }, 1000);
       } else {
         setErrors({ general: data.message });
       }
     } catch (error) {
       console.error('Login error:', error);
-      setErrors({ general: 'Network error. Please check if the server is running.' });
+      setErrors({ general: error.message || 'Network error. Please check if the server is running.' });
     } finally {
       setIsLoading(false);
     }
@@ -141,7 +139,7 @@ export default function Login({ onNavigateToSignup, onNavigateToLanding, onLogin
           {errors.password && <span className="error-message">{errors.password}</span>}
 
           <div className="forgot-password">
-            <button type="button" onClick={() => alert("Forgot password feature coming soon!")}>
+            <button type="button" onClick={() => toast.info("Forgot password feature coming soon!")}>
               Forgot Password?
             </button>
           </div>

@@ -5,8 +5,8 @@
   "scripts": {
     "start": "nodemon server.js",
     "dev": "nodemon server.js",
-    "seed": "node scripts/seedData.js",
-    "seed-multiple": "node scripts/seedMultipleHospitals.js"
+    "seed": "node seed.js",
+    "seed:reset": "node seed.js --reset"
   },
   "dependencies": {
     "express": "^4.18.2",

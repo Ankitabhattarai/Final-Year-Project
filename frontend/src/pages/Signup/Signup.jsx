@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import "./signup.css";
+import { useApi } from "../../context/ApiContext";
+import "./Signup.css";
 
 export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignupSuccess }) {
+  const { apiFetch } = useApi();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -69,15 +71,10 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
     setErrors({});
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/signup', {
+      const data = await apiFetch('/auth/signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(formData),
       });
-
-      const data = await response.json();
 
       if (data.success) {
         // Verify that a patient account was created
@@ -85,13 +82,13 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
           setErrors({ general: 'Error: Account was not created as a patient account. Please contact support.' });
           return;
         }
-        
+
         // Store token in localStorage
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        
+
         setSuccessMessage("Account created successfully! Redirecting...");
-        
+
         // Redirect to dashboard after 1 second
         setTimeout(() => {
           onSignupSuccess();
@@ -101,7 +98,7 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
       }
     } catch (error) {
       console.error('Signup error:', error);
-      setErrors({ general: 'Network error. Please check if the server is running.' });
+      setErrors({ general: error.message || 'Network error. Please check if the server is running.' });
     } finally {
       setIsLoading(false);
     }
