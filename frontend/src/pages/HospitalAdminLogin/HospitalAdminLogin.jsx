@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import { useApi } from '../../context/ApiContext';
+import { toast } from 'sonner';
 
 function HospitalAdminLogin({ onNavigateToLanding, onLoginSuccess }) {
+  const { apiFetch } = useApi();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -22,17 +24,10 @@ function HospitalAdminLogin({ onNavigateToLanding, onLoginSuccess }) {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/hospital-admin-login', {
+      const data = await apiFetch('/auth/hospital-admin-login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(formData)
       });
-
-      console.log('Response status:', response.status);
-      const data = await response.json();
-      console.log('Response data:', data);
 
       if (data.success) {
         localStorage.setItem('token', data.token);
@@ -43,7 +38,7 @@ function HospitalAdminLogin({ onNavigateToLanding, onLoginSuccess }) {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Network error. Please try again.');
+      setError(err.message || 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -107,7 +102,7 @@ function HospitalAdminLogin({ onNavigateToLanding, onLoginSuccess }) {
         }}>
           Welcome to Careline
         </h1>
-        
+
         <p style={{
           fontSize: '16px',
           color: '#6b7280',
@@ -227,9 +222,9 @@ function HospitalAdminLogin({ onNavigateToLanding, onLoginSuccess }) {
 
           {/* Forgot Password */}
           <div style={{ textAlign: 'right', marginBottom: '30px' }}>
-            <button 
+            <button
               type="button"
-              onClick={() => alert('Please contact system administrator for password reset')}
+              onClick={() => toast.info('Please contact system administrator for password reset')}
               style={{
                 color: '#ec4899',
                 background: 'none',
@@ -274,22 +269,22 @@ function HospitalAdminLogin({ onNavigateToLanding, onLoginSuccess }) {
           fontSize: '12px'
         }}>
           <h4 style={{ margin: '0 0 15px 0', color: '#374151' }}>Demo Hospital Credentials:</h4>
-          
+
           <div style={{ marginBottom: '10px' }}>
-            <strong>Bir Hospital:</strong><br/>
+            <strong>Bir Hospital:</strong><br />
             admin@bir-hospital.com | BH-2024-001
           </div>
-          
+
           <div style={{ marginBottom: '10px' }}>
-            <strong>Patan Hospital:</strong><br/>
+            <strong>Patan Hospital:</strong><br />
             admin@patan-hospital.com | PH-2024-002
           </div>
-          
+
           <div style={{ marginBottom: '10px' }}>
-            <strong>Civil Hospital:</strong><br/>
+            <strong>Civil Hospital:</strong><br />
             admin@civil-hospital.com | CH-2024-003
           </div>
-          
+
           <p style={{ margin: '10px 0 0 0', fontWeight: 'bold' }}>Password: admin123</p>
         </div>
       </div>

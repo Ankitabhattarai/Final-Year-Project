@@ -23,14 +23,14 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['patient', 'doctor', 'staff', 'hospital_admin'],
+    enum: ['patient', 'doctor', 'staff', 'hospital_admin', 'admin'],
     default: 'patient'
   },
   hospitalId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Hospital',
     required: function() {
-      return this.role !== 'patient';
+      return this.role !== 'patient' && this.role !== 'admin';
     }
   },
   profile: {
