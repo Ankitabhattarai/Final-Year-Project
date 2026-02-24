@@ -28,6 +28,7 @@ app.use('/api/patients', require('./routes/patient'));
 app.use('/api/patient-dashboard', require('./routes/patientDashboardRoutes'));
 app.use('/api/doctor-dashboard', require('./routes/doctorDashboardRoutes'));
 app.use('/api/profile', require('./routes/profile'));
+app.use('/api/chatbot', require('./routes/chatbotRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

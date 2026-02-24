@@ -96,11 +96,7 @@ export const recommendedSlots = [
 ];
 
 // Chat messages
-export const initialChatMessages = [
-  { id: 'c1', sender: 'bot', text: 'Hello Ankita! How can I assist you today?', timestamp: '10:00 AM' },
-  { id: 'c2', sender: 'user', text: 'I need to check my appointment status.', timestamp: '10:01 AM' },
-  { id: 'c3', sender: 'bot', text: 'Your current token is A101 for General Medicine. You are position 1 in the queue with an estimated wait time of 10 minutes.', timestamp: '10:01 AM' },
-];
+
 
 // Consultation history (for reports)
 export const consultationHistory = [
