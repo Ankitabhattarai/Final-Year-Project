@@ -11,6 +11,12 @@ import DoctorDashboard from "./pages/DoctorDashboard/DoctorDashboard";
 import SettingsPage from "./components/common/SettingPage";
 import TokenGen from "./pages/AdminDashboard/TokenGen";
 import AdminUsersPage from "./pages/AdminDashboard/AdminUser";
+import ReportsDashboard from "./pages/AdminDashboard/ReportsDashboard";
+import SuperAdminDashboard from "./pages/AdminDashboard/SuperAdminDashboard";
+import AdminHospitals from "./pages/AdminDashboard/AdminHospitals";
+import AdminPatients from "./pages/AdminDashboard/AdminPatients";
+import HospitalApply from "./pages/Landing/HospitalApply";
+import ChangePassword from "./pages/auth/ChangePassword";
 import { Toaster } from 'sonner';
 
 // Protected Route wrapper for authentication and role-based access
@@ -21,6 +27,11 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (!user) {
     return <Navigate to="/" replace />;
+  }
+
+  // Force password change if required
+  if (user.mustChangePassword && window.location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
   }
 
   // Map 'admin' to 'hospital_admin' for consistency with back/front requirements if needed
@@ -80,6 +91,11 @@ function App() {
             <AdminDashboard />
           </ProtectedRoute>
         } />
+        <Route path="/admin/reports" element={
+          <ProtectedRoute allowedRoles={['admin', 'hospital_admin']}>
+            <ReportsDashboard />
+          </ProtectedRoute>
+        } />
 
         <Route path="/token-generate" element={
           <ProtectedRoute allowedRoles={['admin', 'hospital_admin']}>
@@ -101,6 +117,33 @@ function App() {
         <Route path="/settings" element={
           <ProtectedRoute allowedRoles={['patient', 'user', 'admin', 'hospital_admin', 'doctor']}>
             <SettingsPage />
+          </ProtectedRoute>
+        } />
+
+        {/* Super Admin Routes */}
+        <Route path="/super-admin-dashboard" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <SuperAdminDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/system/hospitals" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminHospitals />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/system/patients" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminPatients />
+          </ProtectedRoute>
+        } />
+
+        {/* Public Hospital Onboarding */}
+        <Route path="/join" element={<HospitalApply />} />
+
+        {/* Auth Utility Routes */}
+        <Route path="/change-password" element={
+          <ProtectedRoute>
+            <ChangePassword />
           </ProtectedRoute>
         } />
 

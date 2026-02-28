@@ -362,3 +362,111 @@ exports.exportReport = async (req, res) => {
     });
   }
 };
+
+// Get advanced analytics (busiest hours, weekly visits, wait times)
+exports.getAnalytics = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const hospitalId = req.hospitalId;
+
+    const end = endDate ? new Date(endDate) : new Date();
+    end.setHours(23, 59, 59, 999);
+    
+    const start = startDate ? new Date(startDate) : new Date();
+    if (!startDate) {
+      start.setDate(start.getDate() - 30);
+    }
+    start.setHours(0, 0, 0, 0);
+
+    const matchQuery = {
+      hospitalId: new mongoose.Types.ObjectId(hospitalId),
+      scheduledTime: { $gte: start, $lte: end }
+    };
+
+    // 1. Busiest Hours (Distribution of appointments by hour)
+    const busiestHours = await Queue.aggregate([
+      { $match: matchQuery },
+      {
+        $project: {
+          hour: { $hour: '$scheduledTime' }
+        }
+      },
+      {
+        $group: {
+          _id: '$hour',
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // 2. Weekly Visits (By day of week)
+    const weeklyVisits = await Queue.aggregate([
+      { $match: matchQuery },
+      {
+        $project: {
+          dayOfWeek: { $dayOfWeek: '$scheduledTime' }
+        }
+      },
+      {
+        $group: {
+          _id: '$dayOfWeek',
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // 3. Wait Time Trends (Average wait time per day)
+    const waitTimeTrends = await Queue.aggregate([
+      { 
+        $match: {
+          ...matchQuery,
+          actualWaitTime: { $ne: null }
+        } 
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$scheduledTime' },
+            month: { $month: '$scheduledTime' },
+            day: { $dayOfMonth: '$scheduledTime' }
+          },
+          avgWaitTime: { $avg: '$actualWaitTime' }
+        }
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } }
+    ]);
+
+    // 4. Appointment Status Distribution
+    const statusDistribution = await Queue.aggregate([
+      { $match: matchQuery },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        busiestHours: busiestHours.map(h => ({ hour: h._id, count: h.count })),
+        weeklyVisits: weeklyVisits.map(w => ({ day: w._id, count: w.count })),
+        waitTimeTrends: waitTimeTrends.map(t => ({
+          date: `${t._id.year}-${String(t._id.month).padStart(2, '0')}-${String(t._id.day).padStart(2, '0')}`,
+          avgWaitTime: Math.round(t.avgWaitTime)
+        })),
+        statusDistribution: statusDistribution.map(s => ({ status: s._id, count: s.count }))
+      }
+    });
+
+  } catch (error) {
+    console.error('Analytics report error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating analytics'
+    });
+  }
+};

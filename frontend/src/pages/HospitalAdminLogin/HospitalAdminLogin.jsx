@@ -1,8 +1,11 @@
+import React, { useState } from 'react';
 import { useApi } from '../../context/ApiContext';
+import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 
 function HospitalAdminLogin({ onNavigateToLanding, onLoginSuccess }) {
   const { apiFetch } = useApi();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -30,8 +33,7 @@ function HospitalAdminLogin({ onNavigateToLanding, onLoginSuccess }) {
       });
 
       if (data.success) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        login(data.user, data.token);
         onLoginSuccess();
       } else {
         setError(data.message || 'Login failed');

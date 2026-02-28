@@ -62,6 +62,9 @@ const queueSchema = new mongoose.Schema({
   actualWaitTime: {
     type: Number // in minutes
   },
+  consultationTime: {
+    type: Number // in minutes
+  },
   notes: {
     type: String,
     trim: true

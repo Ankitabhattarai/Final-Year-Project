@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Queue = require('../models/Queue');
 const Patient = require('../models/Patient');
 const User = require('../models/User');
+const { estimateWaitTime } = require('../utils/waitTimeUtils');
 
 // Get queue list with filters
 exports.getQueueList = async (req, res) => {
@@ -184,7 +185,7 @@ exports.createQueueEntry = async (req, res) => {
       appointmentType,
       priority,
       notes,
-      estimatedWaitTime: 30 // Default 30 minutes
+      estimatedWaitTime: await estimateWaitTime(doctorId, req.hospitalId)
     };
 
     const queue = new Queue(queueData);
@@ -229,6 +230,12 @@ exports.updateQueueStatus = async (req, res) => {
       updateData.calledTime = new Date();
     } else if (status === 'completed') {
       updateData.completedTime = new Date();
+      
+      // Calculate consultation duration if we have calledTime
+      const currentQueue = await Queue.findById(req.params.queueId);
+      if (currentQueue && currentQueue.calledTime) {
+        updateData.consultationTime = Math.round((updateData.completedTime - currentQueue.calledTime) / (1000 * 60));
+      }
     }
 
     if (notes) {
@@ -351,6 +358,27 @@ exports.deleteQueueEntry = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error cancelling queue entry'
+    });
+  }
+};
+
+// Get estimated wait time for a doctor
+exports.getDoctorWaitTime = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const hospitalId = req.hospitalId;
+
+    const waitTime = await estimateWaitTime(doctorId, hospitalId);
+
+    res.json({
+      success: true,
+      data: { estimatedWaitTime: waitTime }
+    });
+  } catch (error) {
+    console.error('Get doctor wait time error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error calculating wait time'
     });
   }
 };

@@ -19,8 +19,10 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/admin/system', require('./routes/superAdminRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/hospital', require('./routes/hospital'));
+app.use('/api/hospitals/apply', require('./controllers/hospitalRegistrationController').applyHospital); // Direct route for public application
 app.use('/api/users', require('./routes/users'));
 app.use('/api/queue', require('./routes/queue'));
 app.use('/api/reports', require('./routes/reports'));
@@ -29,6 +31,7 @@ app.use('/api/patient-dashboard', require('./routes/patientDashboardRoutes'));
 app.use('/api/doctor-dashboard', require('./routes/doctorDashboardRoutes'));
 app.use('/api/profile', require('./routes/profile'));
 app.use('/api/chatbot', require('./routes/chatbotRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -52,8 +55,14 @@ app.use('*', (req, res) => {
   });
 });
 
+const http = require('http');
+const { initSocket } = require('./utils/socket');
+
+const server = http.createServer(app);
+initSocket(server);
+
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
