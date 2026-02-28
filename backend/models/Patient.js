@@ -4,7 +4,6 @@ const patientSchema = new mongoose.Schema({
   patientId: {
     type: String,
     required: true,
-    unique: true,
     trim: true
   },
   hospitalId: {
@@ -64,7 +63,7 @@ const patientSchema = new mongoose.Schema({
 
 // Compound indexes for hospital-scoped queries
 patientSchema.index({ hospitalId: 1, isActive: 1 });
-patientSchema.index({ hospitalId: 1, patientId: 1 });
+patientSchema.index({ hospitalId: 1, patientId: 1 }, { unique: true });
 patientSchema.index({ hospitalId: 1, phone: 1 });
 
 module.exports = mongoose.model('Patient', patientSchema);

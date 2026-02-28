@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useApi } from "../../context/ApiContext";
+import { useAuth } from "../../context/AuthContext";
 import { toast } from 'sonner';
 import "./Login.css";
 
 export default function Login({ onNavigateToSignup, onNavigateToLanding, onLoginSuccess }) {
   const { apiFetch } = useApi();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -59,9 +61,7 @@ export default function Login({ onNavigateToSignup, onNavigateToLanding, onLogin
       });
 
       if (data.success) {
-        // Store token and user in localStorage
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        login(data.user, data.token);
 
         setSuccessMessage(`Welcome back, ${data.user.fullName}! Redirecting...`);
 

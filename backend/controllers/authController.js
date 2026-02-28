@@ -135,6 +135,7 @@ exports.login = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
+        mustChangePassword: user.mustChangePassword,
         hospital: user.hospitalId ? {
           id: user.hospitalId._id,
           name: user.hospitalId.name,
@@ -214,6 +215,7 @@ exports.hospitalAdminLogin = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
+        mustChangePassword: user.mustChangePassword,
         hospital: {
           id: user.hospitalId._id,
           name: user.hospitalId.name,
@@ -228,5 +230,32 @@ exports.hospitalAdminLogin = async (req, res) => {
       success: false,
       message: 'Server error during login'
     });
+  }
+};
+// Change password
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Check current password
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Invalid current password' });
+    }
+
+    // Update password
+    user.password = newPassword;
+    user.mustChangePassword = false;
+    await user.save();
+
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };

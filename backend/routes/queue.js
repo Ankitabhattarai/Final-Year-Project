@@ -16,6 +16,9 @@ router.use(enforceHospitalScope);
 // Get queue list with filters
 router.get('/', requireHospitalAdmin, queueController.getQueueList);
 
+// Get estimated wait time for a doctor
+router.get('/wait-time/:doctorId', queueController.getDoctorWaitTime);
+
 // Get single queue entry details
 router.get('/:queueId', requireHospitalAdmin, queueController.getQueueEntry);
 

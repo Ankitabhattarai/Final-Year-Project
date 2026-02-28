@@ -42,12 +42,24 @@ const hospitalSchema = new mongoose.Schema({
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: false
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  adminEmail: {
+    type: String,
+    required: [true, 'Admin email is required for registration'],
+    lowercase: true,
+    trim: true
   },
   registrationNumber: {
     type: String,
-    required: true,
+    required: false, // Optional during pending state
     unique: true,
+    sparse: true, // Allow multiple nulls/missing
     trim: true
   }
 }, {

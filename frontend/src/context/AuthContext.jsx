@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
     // Helper to match the role and name expectations in DashboardLayout
     // user in DB uses role 'hospital_admin', 'doctor', 'patient'
     // DashboardLayout expects 'admin' for hospital admins and user.name
-    const role = user?.role === 'hospital_admin' ? 'admin' : user?.role;
+    const role = user?.role;
     const normalizedUser = user ? { ...user, name: user.name || user.fullName } : null;
 
     return (

@@ -93,6 +93,25 @@ const adminService = {
             headers: getAuthHeader()
         });
         return response.data;
+    },
+    getPatientFlow: async (period = '7days') => {
+        const response = await axios.get(`${API_BASE_URL}/dashboard/patient-flow`, {
+            headers: getAuthHeader(),
+            params: { period }
+        });
+        return response.data;
+    },
+    getDepartmentWaitTimes: async () => {
+        const response = await axios.get(`${API_BASE_URL}/dashboard/department-wait-times`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+    getQueueStatus: async () => {
+        const response = await axios.get(`${API_BASE_URL}/dashboard/queue-status`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
     }
 };
 

@@ -10,7 +10,9 @@ import {
     Ticket,
     FileText,
     Users,
+    Bell,
 } from 'lucide-react';
+import NotificationDropdown from '../common/NotificationDropdown';
 
 const patientNav = [
     { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
@@ -23,10 +25,17 @@ const doctorNav = [
 ];
 
 const adminNav = [
-    { label: 'Admin Dashboard', path: '/admin-dashboard', icon: <ShieldCheck size={20} /> },
+    { label: 'Hospital Management', path: '/admin-dashboard', icon: <ShieldCheck size={20} /> },
     { label: 'Reports', path: '/admin/reports', icon: <FileText size={20} /> },
     { label: 'Token Kiosk', path: '/token-generate', icon: <Ticket size={20} /> },
     { label: 'Manage Users', path: '/admin-users', icon: <Users size={20} /> },
+    { label: 'Settings', path: '/settings', icon: <Settings size={20} /> },
+];
+
+const superAdminNav = [
+    { label: 'System Dashboard', path: '/super-admin-dashboard', icon: <LayoutDashboard size={20} /> },
+    { label: 'Manage Hospitals', path: '/admin/system/hospitals', icon: <Users size={20} /> },
+    { label: 'Total Patients', path: '/admin/system/patients', icon: <Users size={20} /> },
     { label: 'Settings', path: '/settings', icon: <Settings size={20} /> },
 ];
 
@@ -35,7 +44,13 @@ export default function DashboardLayout({ children }) {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const navItems = role === 'admin' ? adminNav : role === 'doctor' ? doctorNav : patientNav;
+    const navItems = role === 'admin'
+        ? superAdminNav
+        : role === 'hospital_admin'
+            ? adminNav
+            : role === 'doctor'
+                ? doctorNav
+                : patientNav;
 
     const handleLogout = () => {
         logout();
@@ -108,15 +123,35 @@ export default function DashboardLayout({ children }) {
             {/* Main content */}
             <main className="flex-1 overflow-y-auto">
                 {/* Header */}
-                {/* <header className="h-16 bg-white border-b border-gray-200 px-8 flex items-center">
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-500">Pages</span>
-                        <span className="text-gray-300">/</span>
-                        <span className="text-gray-900 font-semibold capitalize">
-                            {location.pathname.split('/').filter(Boolean).pop() || 'Dashboard'}
-                        </span>
+                <header className="h-20 bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 px-8 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-slate-50 rounded-lg text-slate-500 lg:hidden">
+                            {/* Mobile menu toggle would go here */}
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pages</span>
+                            <h2 className="text-lg font-bold text-slate-800 capitalize leading-tight">
+                                {location.pathname.split('/').filter(Boolean).pop()?.replace('-', ' ') || 'Dashboard'}
+                            </h2>
+                        </div>
                     </div>
-                </header> */}
+
+                    <div className="flex items-center gap-4">
+                        <NotificationDropdown />
+
+                        <div className="h-8 w-[1px] bg-slate-200 mx-2"></div>
+
+                        <div className="flex items-center gap-3 pl-2">
+                            <div className="text-right hidden sm:block">
+                                <p className="text-sm font-bold text-slate-800">{user?.name}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{role?.replace('_', ' ')}</p>
+                            </div>
+                            <div className="w-10 h-10 rounded-full border-2 border-white shadow-sm bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                                {user?.name?.charAt(0).toUpperCase()}
+                            </div>
+                        </div>
+                    </div>
+                </header>
 
                 {/* Page Content */}
                 <div className="p-8">

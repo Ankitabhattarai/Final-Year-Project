@@ -138,6 +138,91 @@ const seedData = async () => {
           await doctor.save();
         }
       }
+
+      // 3. Seed some Patients and Queue History for testing wait times
+      const patientsData = [
+        { fullName: 'Hari Prasad', email: 'hari@example.com', patientId: `${hData.registrationNumber.split('-')[0]}-P-001` },
+        { fullName: 'Sita Devi', email: 'sita@example.com', patientId: `${hData.registrationNumber.split('-')[0]}-P-002` },
+        { fullName: 'Ram Bahadur', email: 'ram@example.com', patientId: `${hData.registrationNumber.split('-')[0]}-P-003` }
+      ];
+
+      const patients = [];
+      for (const pData of patientsData) {
+        let patient = await Patient.findOne({ email: pData.email, hospitalId: hospital._id });
+        if (!patient) {
+          patient = new Patient({
+            ...pData,
+            hospitalId: hospital._id,
+            phone: '9841000000',
+            dateOfBirth: new Date('1990-01-01'),
+            gender: 'other',
+            address: { city: 'Kathmandu', state: 'Bagmati', street: 'Koteshwor', zipCode: '44600' },
+            emergencyContact: { name: 'Friend', relationship: 'Friend', phone: '9800000000' }
+          });
+          await patient.save();
+        }
+        patients.push(patient);
+      }
+
+      // Seed Queue Entries for Dr. Arjun Sharma in Cardiology
+      const arjunDoc = await User.findOne({ fullName: 'Dr. Arjun Sharma', hospitalId: hospital._id });
+      if (arjunDoc) {
+        // Add 5 completed entries with varying consultation times (avg ~12 mins)
+        const consultationTimes = [15, 10, 12, 8, 15];
+        const statusHistory = ['completed', 'completed', 'completed', 'completed', 'completed'];
+        
+        for (let i = 0; i < consultationTimes.length; i++) {
+          const checkTime = new Date();
+          checkTime.setHours(checkTime.getHours() - (i + 1)); // Back in time
+          
+          const callTime = new Date(checkTime);
+          callTime.setMinutes(callTime.getMinutes() + 5);
+          
+          const compTime = new Date(callTime);
+          compTime.setMinutes(compTime.getMinutes() + consultationTimes[i]);
+
+          const tokenNum = `HIST-${String(i + 1).padStart(3, '0')}`;
+          
+          const existingQueue = await Queue.findOne({ tokenNumber: tokenNum, hospitalId: hospital._id });
+          if (!existingQueue) {
+            await Queue.create({
+              tokenNumber: tokenNum,
+              hospitalId: hospital._id,
+              patientId: patients[i % patients.length]._id,
+              doctorId: arjunDoc._id,
+              department: 'Cardiology',
+              status: 'completed',
+              scheduledTime: checkTime,
+              checkedInTime: checkTime,
+              calledTime: callTime,
+              completedTime: compTime,
+              consultationTime: consultationTimes[i],
+              actualWaitTime: 5
+            });
+          }
+        }
+
+        // Add 2 waiting patients for today
+        const today = new Date();
+        today.setHours(9, 0, 0, 0);
+
+        for (let i = 0; i < 2; i++) {
+          const tokenNum = `W-${String(i + 1).padStart(3, '0')}`;
+          const existingQueue = await Queue.findOne({ tokenNumber: tokenNum, hospitalId: hospital._id });
+          if (!existingQueue) {
+            await Queue.create({
+              tokenNumber: tokenNum,
+              hospitalId: hospital._id,
+              patientId: patients[i % patients.length]._id,
+              doctorId: arjunDoc._id,
+              department: 'Cardiology',
+              status: 'waiting',
+              scheduledTime: new Date(today.getTime() + i * 30 * 60000),
+              estimatedWaitTime: 24 // 2 people * 12 min avg
+            });
+          }
+        }
+      }
     }
 
     console.log('\n=== SEED DATA COMPLETED ===');

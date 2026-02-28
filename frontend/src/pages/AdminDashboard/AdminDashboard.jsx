@@ -1,201 +1,247 @@
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import QueueTable from '@/components/common/QueueTable';
-import { adminStats, patientFlowData, waitTimeByDept, queueTokens, consultationHistory } from '@/data/mockData';
-import { Users, Clock, Layers, UserCheck } from 'lucide-react';
+import adminService from '@/services/adminService';
+import { Users, Clock, Layers, UserCheck, RefreshCw, BarChart2, Loader2 } from 'lucide-react';
 import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
+import { Link } from 'react-router-dom';
 
 export default function AdminDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState(null);
+  const [flowData, setFlowData] = useState([]);
+  const [waitTimeData, setWaitTimeData] = useState([]);
+  const [queueData, setQueueData] = useState([]);
+  const [historyData, setHistoryData] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
+  const fetchAllData = async () => {
+    try {
+      if (!metrics) setLoading(true);
+      else setRefreshing(true);
+
+      const [mResp, fResp, wResp, qResp] = await Promise.all([
+        adminService.getDashboardMetrics(),
+        adminService.getPatientFlow('7days'),
+        adminService.getDepartmentWaitTimes(),
+        adminService.getQueueStatus()
+      ]);
+
+      if (mResp.success) setMetrics(mResp.data);
+      if (fResp.success) {
+        // Format flow data for Recharts
+        const formattedFlow = fResp.data.patientFlow.map(item => ({
+          month: `${item._id.month}/${item._id.day}`,
+          scheduled: item.scheduled,
+          attended: item.attended
+        }));
+        setFlowData(formattedFlow);
+      }
+      if (wResp.success) {
+        setWaitTimeData(wResp.data.map(d => ({
+          department: d._id,
+          waitTime: Math.round(d.avgWaitTime)
+        })));
+      }
+      if (qResp.success) {
+        // Map backend fields to QueueTable expectations
+        setQueueData(qResp.data.map((q, idx) => ({
+          ...q,
+          id: q._id || idx,
+          departmentName: q.department,
+          estimatedWait: q.estimatedWaitTime || 0
+        })));
+      }
+
+      // Also get recent history from detailed reports
+      const historyResp = await adminService.getAllUsers({ limit: 5 }); // Fallback or separate history endpoint
+      // For now, let's use the summary stats as a proxy if no history endpoint exists
+      // or we can fetch detailed report
+
+    } catch (error) {
+      console.error('Dashboard load error:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex h-[60vh] items-center justify-center">
+          <Loader2 className="animate-spin text-blue-600" size={40} />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
-      <div className="max-w-7xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Monitoring Dashboard</h1>
-            <p className="text-lg text-gray-600">Overview of all hospital operations</p>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Admin Monitoring</h1>
+            <p className="text-slate-500 mt-1 font-medium">Real-time hospital operations overview</p>
           </div>
-          <div className="flex gap-3">
-            <button className="bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-lg px-5 py-2.5 text-sm border border-gray-300 transition-colors">
-              Export CSV
+          <div className="flex items-center gap-3">
+            <button
+              onClick={fetchAllData}
+              disabled={refreshing}
+              className="p-2.5 text-slate-400 hover:text-blue-600 transition-colors bg-white rounded-xl border border-slate-200 shadow-sm"
+            >
+              <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
             </button>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-5 py-2.5 text-sm transition-colors shadow-sm">
-              Export PDF
-            </button>
+            <Link
+              to="/admin/reports"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl px-5 py-2.5 text-sm transition-all shadow-lg shadow-blue-200"
+            >
+              <BarChart2 size={18} />
+              Detailed Reports
+            </Link>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {/* Stat Card 1 */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                <Users size={24} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Total Patients Today</p>
-                <h3 className="text-3xl font-bold text-gray-900 mb-1">{adminStats.totalPatientsToday.toLocaleString()}</h3>
-                <p className="text-sm text-gray-600">
-                  <span className={adminStats.totalPatientsChange > 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                    {adminStats.totalPatientsChange > 0 ? '+' : ''}{adminStats.totalPatientsChange}%
-                  </span> from yesterday
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Stat Card 2 */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                <Clock size={24} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Avg. Wait Time</p>
-                <h3 className="text-3xl font-bold text-gray-900 mb-1">{adminStats.avgWaitTime} min</h3>
-                <p className="text-sm text-gray-600">
-                  <span className={adminStats.avgWaitChange < 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                    {adminStats.avgWaitChange > 0 ? '+' : ''}{adminStats.avgWaitChange}%
-                  </span> from last week
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Stat Card 3 */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                <Layers size={24} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Active Queues</p>
-                <h3 className="text-3xl font-bold text-gray-900 mb-1">{adminStats.activeQueues}</h3>
-                <p className="text-sm text-gray-600">{adminStats.activeQueuesChange}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Stat Card 4 */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                <UserCheck size={24} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Doctor Availability</p>
-                <h3 className="text-3xl font-bold text-gray-900 mb-1">{adminStats.doctorAvailability}%</h3>
-                <p className="text-sm text-gray-600">
-                  <span className={adminStats.availabilityChange > 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                    {adminStats.availabilityChange > 0 ? '+' : ''}{adminStats.availabilityChange}%
-                  </span> from last month
-                </p>
-              </div>
-            </div>
-          </div>
+        {/* Stats Grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <DashboardStatCard
+            label="Total Patients Today"
+            value={metrics?.totalPatientsToday.value}
+            change={metrics?.totalPatientsToday.change}
+            icon={<Users />}
+            color="text-blue-600"
+            bgColor="bg-blue-50"
+          />
+          <DashboardStatCard
+            label="Avg. Wait Time"
+            value={`${metrics?.avgWaitTime.value} min`}
+            changeText={metrics?.avgWaitTime.changeText}
+            icon={<Clock />}
+            color="text-amber-600"
+            bgColor="bg-amber-50"
+          />
+          <DashboardStatCard
+            label="Active Queues"
+            value={metrics?.activeQueues.value}
+            changeText={metrics?.activeQueues.changeText}
+            icon={<Layers />}
+            color="text-purple-600"
+            bgColor="bg-purple-50"
+          />
+          <DashboardStatCard
+            label="Doctor Availability"
+            value={`${metrics?.doctorAvailability.value}%`}
+            changeText={metrics?.doctorAvailability.changeText}
+            icon={<UserCheck />}
+            color="text-emerald-600"
+            bgColor="bg-emerald-50"
+          />
         </div>
 
-        {/* Charts */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-12">
-          <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Patient Flow Over Time</h2>
-            <p className="text-sm text-gray-600 mb-6">Scheduled vs. Attended patients monthly.</p>
-            <div className="h-80">
+        {/* Charts Grid */}
+        <div className="grid lg:grid-cols-2 gap-8 mb-10">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h3 className="text-lg font-bold text-slate-800 mb-6">Patient Flow Trending</h3>
+            <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={patientFlowData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="month" stroke="#6B7280" fontSize={12} />
-                  <YAxis stroke="#6B7280" fontSize={12} />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                    }}
+                <AreaChart data={flowData}>
+                  <defs>
+                    <linearGradient id="colorScheduled" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   />
-                  <Legend />
-                  <Line type="monotone" dataKey="scheduled" stroke="#2563EB" strokeWidth={3} dot={{ r: 4 }} name="Scheduled" />
-                  <Line type="monotone" dataKey="attended" stroke="#10B981" strokeWidth={3} dot={{ r: 4 }} name="Attended" />
-                </LineChart>
+                  <Area type="monotone" dataKey="scheduled" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorScheduled)" />
+                  <Area type="monotone" dataKey="attended" stroke="#10B981" strokeWidth={3} fillOpacity={0} />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
-            <h2 className="text-2xl font-bold text-gray-900 mb-8">Average Wait Time by Department</h2>
-            <div className="h-80">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h3 className="text-lg font-bold text-slate-800 mb-6">Avg Wait by Department</h3>
+            <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={waitTimeByDept}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="department" stroke="#6B7280" fontSize={11} />
-                  <YAxis stroke="#6B7280" fontSize={12} unit=" min" />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                    }}
+                <BarChart data={waitTimeData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                  <XAxis dataKey="department" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 11 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} unit="m" />
+                  <Tooltip
+                    cursor={{ fill: '#F8FAFC' }}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   />
-                  <Bar dataKey="waitTime" fill="#2563EB" radius={[8, 8, 0, 0]} name="Wait Time" />
+                  <Bar dataKey="waitTime" fill="#3B82F6" radius={[6, 6, 0, 0]} barSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
         </div>
 
-        {/* Real-time Queue */}
-        <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Real-time Queue Status</h2>
-          <p className="text-sm text-gray-600 mb-6">Current patients awaiting service.</p>
-          <QueueTable tokens={queueTokens} showDoctor />
-        </div>
-
-        {/* Reports */}
-        <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Detailed Reports</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">ID</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Patient Name</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Department</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Doctor</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Status</th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600 uppercase tracking-wide">Date</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white">
-                {consultationHistory.map((c, index) => (
-                  <tr key={c.id} className={index !== consultationHistory.length - 1 ? "border-b border-gray-100" : ""}>
-                    <td className="font-mono py-4 px-6 text-sm text-gray-900">{c.id.toUpperCase().replace('CH', 'R-00')}</td>
-                    <td className="py-4 px-6 text-sm text-gray-900">{c.patientName}</td>
-                    <td className="py-4 px-6 text-sm text-gray-900">{c.departmentName}</td>
-                    <td className="py-4 px-6 text-sm text-gray-900">{c.doctorName}</td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                        c.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        c.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-600">{c.date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Real-time Queue Status */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-10">
+          <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800">Current Queue Status</h3>
+              <p className="text-sm text-slate-500">Live monitoring of patients undergoing service</p>
+            </div>
+            <span className="flex h-3 w-3 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+            </span>
           </div>
-          <div className="flex justify-end mt-6">
-            <p className="text-sm text-gray-600">Page 1 of 5</p>
-          </div>
+          <QueueTable tokens={queueData} showDoctor />
         </div>
       </div>
     </DashboardLayout>
   );
 }
+
+function DashboardStatCard({ label, value, change, changeText, icon, color, bgColor }) {
+  const isPositive = change >= 0;
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg transition-all transform hover:-translate-y-1">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{label}</p>
+          <h3 className="text-3xl font-extrabold text-slate-900 mb-px">{value !== undefined ? value : '...'}</h3>
+          {change !== undefined ? (
+            <p className={`text-xs font-bold mt-2 flex items-center gap-1 ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+              <TrendingUp size={12} className={!isPositive ? 'rotate-180' : ''} />
+              {isPositive ? '+' : ''}{change}%
+              <span className="text-slate-400 font-normal">from yesterday</span>
+            </p>
+          ) : (
+            <p className="text-xs text-slate-400 mt-2 font-medium">{changeText}</p>
+          )}
+        </div>
+        <div className={`p-3 rounded-xl ${bgColor} ${color}`}>
+          {React.cloneElement(icon, { size: 24 })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TrendingUp({ size, className }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+      <polyline points="16 7 22 7 22 13"></polyline>
+    </svg>
+  );
+}
+

@@ -25,4 +25,7 @@ router.get('/doctor-performance', requireHospitalAdmin, reportsController.getDoc
 // Export report data as CSV
 router.get('/export/csv', requireHospitalAdmin, reportsController.exportReport);
 
+// Get advanced analytics
+router.get('/analytics', requireHospitalAdmin, reportsController.getAnalytics);
+
 module.exports = router;

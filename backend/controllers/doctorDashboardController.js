@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const Queue = require('../models/Queue');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
+const { sendTurnNotificationEmail } = require('../utils/emailUtils');
+const { sendSocketNotification } = require('../utils/socket');
 
 /**
  * Handles doctor dashboard data fetching and status updates
@@ -47,8 +50,22 @@ exports.updatePatientStatus = async (req, res) => {
     const updateData = { status };
     if (status === 'in_progress') {
       updateData.calledTime = new Date();
+      
+      // Calculate actual wait time from scheduled time
+      const currentQueue = await Queue.findById(queueId);
+      if (currentQueue && currentQueue.scheduledTime) {
+        const scheduledTime = new Date(currentQueue.scheduledTime);
+        const waitTimeMinutes = Math.round((updateData.calledTime - scheduledTime) / (1000 * 60));
+        updateData.actualWaitTime = Math.max(0, waitTimeMinutes);
+      }
     } else if (status === 'completed') {
       updateData.completedTime = new Date();
+      
+      // Calculate consultation duration if we have calledTime
+      const currentQueue = await Queue.findById(queueId);
+      if (currentQueue && currentQueue.calledTime) {
+        updateData.consultationTime = Math.round((updateData.completedTime - currentQueue.calledTime) / (1000 * 60));
+      }
     }
     if (notes) updateData.notes = notes;
 
@@ -67,6 +84,87 @@ exports.updatePatientStatus = async (req, res) => {
       message: `Status updated to ${status}`,
       data: queueEntry
     });
+
+    // Notify the NEXT patient in the queue if a turn just started
+    console.log('--- Notification Trigger Check ---');
+    console.log('Status updated to:', status);
+    
+    if (status === 'in_progress') {
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        
+        console.log('Searching for next patient for doctor:', doctorId, '(from req.user:', req.user._id, ')');
+        console.log('Query start time:', todayStart);
+
+        const nextPatient = await Queue.findOne({
+          doctorId,
+          status: 'waiting',
+          scheduledTime: { $gte: todayStart }
+        }).sort({ scheduledTime: 1, priority: -1 })
+          .populate('patientId', 'fullName email')
+          .populate('hospitalId', 'name');
+
+        console.log('Next patient query result:', nextPatient ? {
+          token: nextPatient.tokenNumber,
+          patientId: nextPatient.patientId?._id,
+          patientExists: !!nextPatient.patientId,
+          email: nextPatient.patientId?.email
+        } : 'NOT FOUND');
+
+        if (nextPatient && nextPatient.patientId) {
+          const patientId = nextPatient.patientId._id;
+          const hospitalName = nextPatient.hospitalId.name;
+          const doctorName = req.user.fullName;
+          const tokenNumber = nextPatient.tokenNumber;
+
+          console.log(`Creating notification for ${nextPatient.patientId.fullName} (Token: ${tokenNumber})`);
+
+          // 1. Save in-app notification
+          const notification = new Notification({
+            patientId,
+            hospitalId: nextPatient.hospitalId._id,
+            title: 'Your turn is coming up!',
+            message: `Hello ${nextPatient.patientId.fullName}, you are next in line for ${doctorName}. Please be ready.`,
+            type: 'turn_alert'
+          });
+          await notification.save();
+          console.log('Notification saved to DB:', notification._id);
+
+          // 2. Send socket notification
+          const targetUser = await User.findOne({ email: nextPatient.patientId.email });
+          if (targetUser) {
+            console.log('Found target user for socket:', targetUser._id);
+            sendSocketNotification(targetUser._id, {
+              id: notification._id,
+              title: notification.title,
+              message: notification.message,
+              type: notification.type,
+              createdAt: notification.createdAt
+            });
+          } else {
+            console.warn('Could not find user record for next patient email:', nextPatient.patientId.email);
+          }
+
+          // 3. Send Email alert
+          if (nextPatient.patientId.email) {
+            console.log('Sending email to:', nextPatient.patientId.email);
+            await sendTurnNotificationEmail(
+              nextPatient.patientId.email,
+              hospitalName,
+              doctorName,
+              tokenNumber
+            );
+          }
+        } else {
+          console.log('No eligible next patient found in queue to notify.');
+        }
+      } catch (notifyError) {
+        console.error('Notification trigger error:', notifyError);
+      }
+    }
+    console.log('--- End Notification Check ---');
+
   } catch (error) {
     console.error('Update status error:', error);
     res.status(500).json({ success: false, message: 'Error updating status' });

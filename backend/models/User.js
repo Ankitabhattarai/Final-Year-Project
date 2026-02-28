@@ -56,6 +56,10 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  mustChangePassword: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

@@ -2,6 +2,7 @@ const Hospital = require('../models/Hospital');
 const Queue = require('../models/Queue');
 const Patient = require('../models/Patient');
 const User = require('../models/User');
+const { estimateWaitTime, calculateAverageConsultationTime } = require('../utils/waitTimeUtils');
 
 // Get all active hospitals
 exports.getHospitals = async (req, res) => {
@@ -67,8 +68,11 @@ exports.getMyQueue = async (req, res) => {
       }
 
     
+      const doctorId = entry.doctorId?._id || entry.doctorId;
+      const avgTime = await calculateAverageConsultationTime(doctorId);
+
       const position = await Queue.countDocuments({
-        doctorId: entry.doctorId?._id || entry.doctorId,
+        doctorId,
         status: 'waiting',
         scheduledTime: { $gte: today, $lt: tomorrow },
         createdAt: { $lt: entry.createdAt }
@@ -77,7 +81,7 @@ exports.getMyQueue = async (req, res) => {
       return { 
         ...entry.toObject(), 
         position: position + 1,
-        estimatedWaitTime: (position + 1) * 10
+        estimatedWaitTime: (position + 1) * avgTime
       };
     }));
 
@@ -113,9 +117,12 @@ exports.getAvailableDoctors = async (req, res) => {
         status: { $in: ['waiting', 'in_progress'] },
         scheduledTime: { $gte: today, $lt: tomorrow }
       });
+      const waitTime = await estimateWaitTime(doc._id, req.params.hospitalId);
+
       return {
         ...doc.toObject(),
-        queueCount
+        queueCount,
+        estimatedWaitTime: waitTime
       };
     }));
 
@@ -142,9 +149,11 @@ exports.bookToken = async (req, res) => {
     let patient = await Patient.findOne({ hospitalId, email: req.user.email });
     
     if (!patient) {
-      // Generate a new patient ID
+      // Generate a new patient ID with hospital prefix
+      const hospital = await Hospital.findById(hospitalId);
+      const prefix = hospital ? hospital.registrationNumber.split('-')[0] : 'P';
       const patientCount = await Patient.countDocuments({ hospitalId });
-      const patientId = `P-${String(patientCount + 1).padStart(5, '0')}`;
+      const patientId = `${prefix}-P-${String(patientCount + 1).padStart(5, '0')}`;
       
       patient = new Patient({
         patientId,
@@ -189,7 +198,7 @@ exports.bookToken = async (req, res) => {
       appointmentType: 'walk-in',
       priority: 'normal',
       notes,
-      estimatedWaitTime: 30
+      estimatedWaitTime: await estimateWaitTime(doctorId, hospitalId)
     });
 
     await queueEntry.save();
