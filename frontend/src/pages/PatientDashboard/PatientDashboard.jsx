@@ -4,7 +4,7 @@ import ChatWidget from '../../components/common/ChatWidgets';
 import { Ticket, Clock, CalendarDays, Building2, Loader2, CheckCircle2 } from 'lucide-react';
 import patientDashboardService from '@/services/patientDashboardService';
 import { toast } from 'sonner';
-import { recommendedSlots } from '../../data/mockData';
+import AIRecommendations from '../../components/common/AIRecommendations';
 
 export default function PatientDashboard() {
   const [user, setUser] = useState(null);
@@ -262,21 +262,15 @@ export default function PatientDashboard() {
           </div>
         </div>
 
-        {/* //AI Recommended Slots */}
-        <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm mb-12">
-          <h2 className="text-2xl font-bold text-gray-900">AI Recommended Slots</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {recommendedSlots.map((slot) => (
-              <div key={slot.id} className="mt-5 border border-border rounded-xl p-4 hover:border-primary transition-colors">
-                <p className="text-sm font-medium text-muted-foreground">{slot.date}</p>
-                <p className="text-lg font-display font-semibold mt-1">{slot.time}</p>
-                <p className="text-sm text-foreground mt-2">{slot.doctorName}</p>
-                <p className="text-xs text-muted-foreground">{slot.department}</p>
-                <button className=" w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg mt-2 px-6 py-3 text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">Book Now</button>
-              </div>
-            ))}
+        {/* AI Recommended Slots */}
+        {selectedDept && selectedHospital && (
+          <div className="mb-12">
+            <AIRecommendations
+              department={departments.find(d => d._id === selectedDept)?.name}
+              hospitalId={selectedHospital}
+            />
           </div>
-        </div>
+        )}
 
         {/* My Bookings */}
         <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm mb-12">

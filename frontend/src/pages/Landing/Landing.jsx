@@ -11,7 +11,7 @@ function Landing({ onNavigateToLogin, onNavigateToSignup }) {
         </div>
         <nav className="nav">
           <button className="nav-btn hospital-btn" onClick={() => window.location.href = '/join'}>Join as Hospital</button>
-          <button className="nav-btn login-btn" onClick={onNavigateToLogin}>Patient Login</button>
+          <button className="nav-btn login-btn" onClick={onNavigateToLogin}>Login</button>
           <button className="nav-btn signup-btn" onClick={onNavigateToSignup}>Sign Up</button>
         </nav>
       </header>
