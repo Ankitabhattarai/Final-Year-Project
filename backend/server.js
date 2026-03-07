@@ -22,7 +22,7 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/admin/system', require('./routes/superAdminRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/hospital', require('./routes/hospital'));
-app.use('/api/hospitals/apply', require('./controllers/hospitalRegistrationController').applyHospital); // Direct route for public application
+app.use('/api/hospitals/apply', require('./controllers/hospitalRegistrationController').applyHospital);
 app.use('/api/users', require('./routes/users'));
 app.use('/api/queue', require('./routes/queue'));
 app.use('/api/reports', require('./routes/reports'));
@@ -32,6 +32,7 @@ app.use('/api/doctor-dashboard', require('./routes/doctorDashboardRoutes'));
 app.use('/api/profile', require('./routes/profile'));
 app.use('/api/chatbot', require('./routes/chatbotRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/ai', require('./routes/aiRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

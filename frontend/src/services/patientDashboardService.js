@@ -36,6 +36,12 @@ const patientDashboardService = {
             headers: getAuthHeader()
         });
         return response.data;
+    },
+    getAiRecommendations: async (department, hospitalId) => {
+        const response = await axios.get(`${API_BASE_URL}/ai/recommend?department=${department}&hospitalId=${hospitalId}`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
     }
 };
 

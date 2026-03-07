@@ -89,7 +89,9 @@ const seedData = async () => {
           ],
           capacity: { totalBeds: 150, availableBeds: 50, totalDoctors: 10, totalStaff: 30 },
           registrationNumber: hData.registrationNumber,
-          isActive: true
+          adminEmail: hData.adminEmail,
+          isActive: true,
+          status: 'approved'
         });
         await hospital.save();
         console.log(`Hospital created: ${hospital.name}`);
@@ -160,6 +162,19 @@ const seedData = async () => {
             emergencyContact: { name: 'Friend', relationship: 'Friend', phone: '9800000000' }
           });
           await patient.save();
+          
+          // Also create a User record for the patient so they can log in
+          const existingUser = await User.findOne({ email: pData.email });
+          if (!existingUser) {
+            await User.create({
+              fullName: pData.fullName,
+              email: pData.email,
+              password: 'patient123',
+              role: 'patient',
+              isActive: true
+            });
+            console.log(`User account created for patient: ${pData.email}`);
+          }
         }
         patients.push(patient);
       }
