@@ -3,7 +3,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import profileService from '@/services/profileService';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, User, Lock, Bell, Mail, Shield, Smartphone, Globe, Camera } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
@@ -21,6 +21,15 @@ export default function SettingsPage() {
     confirmPassword: ''
   });
   const [changingPassword, setChangingPassword] = useState(false);
+  const [isSecurityOpen, setIsSecurityOpen] = useState(false);
+
+  // Preferences state (Dummy for UI completeness)
+  const [preferences, setPreferences] = useState({
+    emailNotifications: true,
+    browserAlerts: false,
+    publicProfile: true,
+    twoFactor: false
+  });
 
   useEffect(() => {
     fetchProfile();
@@ -32,8 +41,8 @@ export default function SettingsPage() {
       const resp = await profileService.getProfile();
       if (resp.success) {
         const data = resp.data;
-        setName(data.fullName);
-        setEmail(data.email);
+        setName(data.fullName || '');
+        setEmail(data.email || '');
         setPhone(data.profile?.phone || '');
       }
     } catch (error) {
@@ -95,6 +104,11 @@ export default function SettingsPage() {
     }
   };
 
+  const togglePreference = (key) => {
+    setPreferences(prev => ({ ...prev, [key]: !prev[key] }));
+    toast.info(`Preference updated: ${key.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -107,109 +121,197 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Settings</h1>
-          <p className="text-lg text-gray-600">Configure your Careline experience to your liking.</p>
+      <div className="max-w-6xl mx-auto">
+        {/* Page Header */}
+        <div className="mb-10">
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Account Settings</h1>
+          <p className="text-slate-500 mt-1">Manage your profile, security settings, and communication preferences.</p>
         </div>
 
-        <div className="space-y-8">
-          {/* Profile Settings */}
-          <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Profile Settings</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Sidebar / Profile Card */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="h-24 bg-gradient-to-r from-blue-600 to-indigo-700"></div>
+              <div className="px-6 pb-6">
+                <div className="relative -mt-12 flex justify-center">
+                  <div className="relative group">
+                    <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-xl flex items-center justify-center text-blue-600 text-4xl font-black overflow-hidden bg-slate-100">
+                      {name ? name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                   
+                  </div>
+                </div>
+                <div className="text-center mt-4">
+                  <h2 className="text-xl font-bold text-slate-900">{name}</h2>
+                  <p className="text-sm text-slate-500">{email}</p>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold mt-3 uppercase tracking-wider">
+                    <Shield size={12} />
+                    {user?.role?.replace('_', ' ')}
+                  </div>
+                </div>
 
-            <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200">
-              <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold shadow-md">
-                {name.charAt(0)}
+                <div className="mt-8 space-y-2">
+                  <div className="flex justify-between text-sm py-2 border-b border-slate-50 text-slate-600">
+                    <span>Member since</span>
+                    <span className="font-semibold text-slate-900">March 2024</span>
+                  </div>
+                  <div className="flex justify-between text-sm py-2 border-b border-slate-50 text-slate-600">
+                    <span>Profile Status</span>
+                    <span className="text-emerald-600 font-bold">Verified</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-gray-600 text-sm">Update your personal information below.</p>
             </div>
 
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-                <input
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                <input
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900 bg-gray-50 color-gray-500"
-                  value={email}
-                  readOnly
-                />
-                <p className="text-xs text-gray-400 mt-1">Email cannot be changed for security reasons.</p>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
-                <input
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </div>
-              <button
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 text-base transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
-                onClick={handleSaveChanges}
-                disabled={saving}
-              >
-                {saving && <Loader2 className="animate-spin" size={20} />}
-                Save Changes
-              </button>
+            {/* Quick Navigation Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 hidden lg:block">
+              <nav className="space-y-1">
+                <a href="#profile" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-50 text-blue-700 font-semibold transition-all">
+                  <User size={18} />
+                  Profile Details
+                </a>
+                <a href="#security" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium transition-all">
+                  <Lock size={18} />
+                  Security & Access
+                </a>
+              </nav>
             </div>
           </div>
 
-          {/* Security & Account */}
-          <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Security & Account</h2>
-            <form onSubmit={handlePasswordChange} className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
-                <input
-                  type="password"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  value={passwords.oldPassword}
-                  onChange={(e) => setPasswords({ ...passwords, oldPassword: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
-                  <input
-                    type="password"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    value={passwords.newPassword}
-                    onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label>
-                  <input
-                    type="password"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    value={passwords.confirmPassword}
-                    onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
-                    required
-                  />
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-8">
+            
+            {/* Profile Section */}
+            <section id="profile" className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <User size={20} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">Personal Information</h3>
                 </div>
               </div>
+              <div className="p-8 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 ml-1">Full Name</label>
+                    <input
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900 font-medium"
+                      placeholder="Enter your full name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 ml-1">Phone Number</label>
+                    <input
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900 font-medium"
+                      placeholder="+1 (555) 000-0000"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-              <button
-                type="submit"
-                className="bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-lg px-6 py-3 text-base border border-gray-300 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
-                disabled={changingPassword}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 ml-1">Email Address</label>
+                  <div className="relative">
+                    <input
+                      className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl outline-none text-slate-500 font-medium cursor-not-allowed pr-12"
+                      value={email}
+                      readOnly
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                      <Lock size={16} />
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-400 ml-1">Email address is managed by administrator and cannot be updated here.</p>
+                </div>
+
+                <div className="pt-4 flex justify-end">
+                  <button
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl px-8 py-3 transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2 disabled:opacity-50 active:scale-95"
+                    onClick={handleSaveChanges}
+                    disabled={saving}
+                  >
+                    {saving && <Loader2 className="animate-spin" size={18} />}
+                    Update Profile
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Security Section */}
+            <section id="security" className={`bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 ${isSecurityOpen ? 'ring-2 ring-indigo-500/20' : ''}`}>
+              <div 
+                className="px-8 py-6 cursor-pointer hover:bg-slate-50 transition-colors flex items-center justify-between"
+                onClick={() => setIsSecurityOpen(!isSecurityOpen)}
               >
-                {changingPassword && <Loader2 className="animate-spin" size={20} />}
-                Update Password
-              </button>
-            </form>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                    <Lock size={20} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">Security & Password</h3>
+                </div>
+                <div className={`text-slate-400 transition-transform duration-300 ${isSecurityOpen ? 'rotate-180' : ''}`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+              </div>
+              
+              {isSecurityOpen && (
+                <form onSubmit={handlePasswordChange} className="p-8 space-y-6 border-t border-slate-100 animate-in slide-in-from-top-4 duration-300">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 ml-1">Current Password</label>
+                    <input
+                      type="password"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                      placeholder="••••••••"
+                      value={passwords.oldPassword}
+                      onChange={(e) => setPasswords({ ...passwords, oldPassword: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-slate-700 ml-1">New Password</label>
+                      <input
+                        type="password"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                        placeholder="Min. 8 characters"
+                        value={passwords.newPassword}
+                        onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-slate-700 ml-1">Confirm New Password</label>
+                      <input
+                        type="password"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                        placeholder="Repeat new password"
+                        value={passwords.confirmPassword}
+                        onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex justify-end">
+                    <button
+                      type="submit"
+                      className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl px-8 py-3 transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50"
+                      disabled={changingPassword}
+                    >
+                      {changingPassword && <Loader2 className="animate-spin" size={18} />}
+                      Change Password
+                    </button>
+                  </div>
+                </form>
+              )}
+            </section>
+
           </div>
         </div>
       </div>
@@ -217,26 +319,4 @@ export default function SettingsPage() {
   );
 }
 
-function ToggleRow({ label, description, checked, onChange }) {
-  return (
-    <div className="flex items-start justify-between gap-8 py-2">
-      <div className="flex-1">
-        <p className="font-semibold text-gray-900 mb-1">{label}</p>
-        <p className="text-sm text-gray-600">{description}</p>
-      </div>
-      <div className="flex-shrink-0 pt-1">
-        <button
-          onClick={() => onChange(!checked)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${checked ? 'bg-blue-600' : 'bg-gray-300'
-            }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-200 ${checked ? 'translate-x-6' : 'translate-x-1'
-              }`}
-          />
-        </button>
-        
-      </div>
-    </div>
-  );
-}
+
