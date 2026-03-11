@@ -42,6 +42,12 @@ const patientDashboardService = {
             headers: getAuthHeader()
         });
         return response.data;
+    },
+    getQuickSuggestion: async () => {
+        const response = await axios.get(`${API_BASE_URL}/ai/quick-suggestion`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
     }
 };
 
