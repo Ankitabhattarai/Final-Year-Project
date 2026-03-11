@@ -58,7 +58,7 @@ function App() {
             onNavigateToLanding={() => window.location.href = '/'}
             onLoginSuccess={(target) => {
               if (target === 'doctorDashboard') window.location.href = '/doctor-dashboard';
-              else if (target === 'adminDashboard') window.location.href = '/admin-dashboard';
+              else if (target === 'adminDashboard') window.location.href = '/super-admin-dashboard';
               else window.location.href = '/dashboard';
             }}
           />
