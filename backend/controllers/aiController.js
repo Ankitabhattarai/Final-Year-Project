@@ -207,12 +207,15 @@ exports.getQuickSuggestion = async (req, res) => {
             };
         }));
 
-        // 5. Use the recommendation script to pick the best one
+        // 5. Use the recommendation script to pick the best ones
         const result = await runPythonScript('recommend.py', options);
+        
+        // Return top 4 results
+        const top4 = result.all_results ? result.all_results.slice(0, 4) : [];
         
         res.json({
             success: true,
-            data: result.recommended
+            data: top4
         });
     } catch (error) {
         console.error('AI Quick Suggestion error:', error);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ChatWidget from '../../components/common/ChatWidgets';
-import { Ticket, Clock, CalendarDays, Building2, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
+import { Ticket, Clock, CalendarDays, Building2, Loader2, CheckCircle2, Sparkles, User } from 'lucide-react';
 import patientDashboardService from '@/services/patientDashboardService';
 import { toast } from 'sonner';
 import AIRecommendations from '../../components/common/AIRecommendations';
@@ -16,7 +16,7 @@ export default function PatientDashboard() {
   const [departments, setDepartments] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [myQueue, setMyQueue] = useState([]);
-  const [quickSuggestion, setQuickSuggestion] = useState(null);
+  const [quickSuggestions, setQuickSuggestions] = useState([]);
 
   // Selection states
   const [selectedHospital, setSelectedHospital] = useState('');
@@ -56,7 +56,7 @@ export default function PatientDashboard() {
       ]);
       setHospitals(hResp.data || []);
       setMyQueue(qResp.data || []);
-      setQuickSuggestion(sResp.data || null);
+      setQuickSuggestions(sResp.data || []);
     } catch (error) {
       console.error('Error fetching patient data:', error);
     } finally {
@@ -162,9 +162,9 @@ export default function PatientDashboard() {
         patientDashboardService.getQuickSuggestion()
       ]);
       setMyQueue(qResp.data || []);
-      setQuickSuggestion(sResp.data || null);
+      setQuickSuggestions(sResp.data || []);
 
-      toast.success(`Successfully booked with Dr. ${suggestion.doctor_name}`);
+      toast.success(`Successfully booked with Dr. ${suggestion.doctor_name || suggestion.option?.doctor_name}`);
     } catch (error) {
       console.error('Quick book error:', error);
       toast.error(error.response?.data?.message || 'Error booking quick token');
@@ -194,55 +194,56 @@ export default function PatientDashboard() {
           <p className="text-lg text-gray-600">Welcome back, {user?.fullName || 'Patient'}</p>
         </div>
 
-        {/* Proactive Recommendation Section */}
-        {quickSuggestion && (
+        {/* Proactive Recommendations Section */}
+        {quickSuggestions && quickSuggestions.length > 0 && (
           <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-8 text-white shadow-xl shadow-blue-200 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-10">
-                <Sparkles size={120} className="text-white" />
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-indigo-50 rounded-lg">
+                <Sparkles className="w-5 h-5 text-indigo-600" />
               </div>
-              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                <div className="flex-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-widest mb-4 backdrop-blur-md">
-                    <Sparkles size={14} className="text-yellow-300" />
-                    Recommended for You
-                  </div>
-                  <h2 className="text-3xl font-black mb-2">Dr. {quickSuggestion.doctor_name}</h2>
-                  <p className="text-lg text-blue-100 font-medium mb-6">
-                    {quickSuggestion.specialization} • {quickSuggestion.hospital_name}
-                  </p>
-                  <div className="flex flex-wrap gap-4">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 flex items-center gap-3">
-                      <div className="p-2 bg-white/20 rounded-lg">
-                        <Clock size={20} className="text-white" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase font-bold text-blue-100 opacity-80">Estimated Wait</p>
-                        <p className="text-xl font-bold">{Math.round(quickSuggestion.predicted_wait_min)} Min</p>
-                      </div>
+              <h2 className="text-2xl font-bold text-gray-800">Recommended for You</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {quickSuggestions.map((suggestion, idx) => {
+                const doc = suggestion.option || suggestion;
+                const waitTime = Math.round(suggestion.predicted_wait_min);
+                
+                return (
+                  <div key={idx} className="group relative bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all duration-300 flex flex-col h-full">
+                    <div className="absolute top-4 right-4 text-indigo-100 group-hover:text-indigo-500 transition-colors">
+                      <Sparkles size={24} />
                     </div>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 flex items-center gap-3">
-                      <div className="p-2 bg-white/20 rounded-lg">
-                        <Building2 size={20} className="text-white" />
+                    
+                    <div className="mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-4 group-hover:scale-110 transition-transform">
+                        <User size={24} />
                       </div>
-                      <div>
-                        <p className="text-[10px] uppercase font-bold text-blue-100 opacity-80">Department</p>
-                        <p className="text-xl font-bold">{quickSuggestion.department}</p>
+                      <h3 className="text-lg font-bold text-slate-900 line-clamp-1">Dr. {doc.doctor_name}</h3>
+                      <p className="text-sm font-semibold text-indigo-600">{doc.department}</p>
+                    </div>
+
+                    <div className="mt-auto space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl group-hover:bg-indigo-50 transition-colors">
+                        <div className="flex items-center gap-2">
+                          <Clock size={16} className="text-slate-400" />
+                          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Wait Time</span>
+                        </div>
+                        <span className="text-lg font-black text-slate-900 group-hover:text-indigo-700">{waitTime}m</span>
                       </div>
+
+                      <button
+                        disabled={submitting}
+                        onClick={() => handleQuickBook(doc.doctor_id ? doc : suggestion)}
+                        className="w-full bg-slate-900 hover:bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {submitting ? <Loader2 className="animate-spin" size={16} /> : <Ticket size={16} />}
+                        Book Token
+                      </button>
                     </div>
                   </div>
-                </div>
-                <div className="shrink-0">
-                  <button
-                    disabled={submitting}
-                    onClick={() => handleQuickBook(quickSuggestion)}
-                    className="group bg-white hover:bg-blue-50 text-blue-700 px-10 py-5 rounded-2xl font-black text-xl shadow-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center gap-3"
-                  >
-                    {submitting ? <Loader2 className="animate-spin" size={24} /> : <Ticket size={24} />}
-                    Book Token Now
-                  </button>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
         )}
