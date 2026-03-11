@@ -16,237 +16,204 @@ const connectDB = async () => {
 };
 
 const seedData = async () => {
-  try {
-    await connectDB();
+    try {
+        await connectDB();
 
-    const shouldReset = process.argv.includes('--reset');
-    if (shouldReset) {
-      console.log('Resetting database...');
-      await Hospital.deleteMany({});
-      await User.deleteMany({});
-      await Patient.deleteMany({});
-      await Queue.deleteMany({});
-      console.log('Cleared existing data');
-    }
+        const shouldReset = process.argv.includes('--reset');
+        if (shouldReset) {
+            console.log('Resetting database...');
+            await Hospital.deleteMany({});
+            await User.deleteMany({});
+            await Patient.deleteMany({});
+            await Queue.deleteMany({});
+            const Notification = require('./models/Notification');
+            await Notification.deleteMany({});
+            console.log('Cleared existing data');
+        }
 
-    // 1. Seed System Admin
-    const adminEmail = 'system.admin@careline.com';
-    const existingAdmin = await User.findOne({ email: adminEmail });
+        // 1. System Admin
+        const adminEmail = 'system.admin@careline.com';
+        let systemAdmin = await User.findOne({ email: adminEmail });
+        if (!systemAdmin) {
+            systemAdmin = new User({
+                fullName: 'System Admin',
+                email: adminEmail,
+                password: 'admin123',
+                role: 'admin',
+                isActive: true,
+                profile: { phone: '9800000000' }
+            });
+            await systemAdmin.save();
+            console.log('Created System Admin');
+        }
 
-    if (!existingAdmin) {
-      const newAdmin = new User({
-        fullName: 'System Admin',
-        email: adminEmail,
-        password: 'admin123',
-        role: 'admin',
-        isActive: true,
-        profile: { phone: '9800000000' }
-      });
-      await newAdmin.save();
-      console.log(`Created new System Admin: ${adminEmail}`);
-    } else {
-      console.log('System Admin already exists.');
-    }
-
-    // 2. Seed Hospitals and Hospital Admins
-    const hospitalsData = [
-      {
-        name: 'Bir Hospital',
-        address: { street: 'Mahaboudha', city: 'Kathmandu', state: 'Central', zipCode: '44600', country: 'Nepal' },
-        contact: { phone: '+977-1-4221119', email: 'info@bir-hospital.com', website: 'www.bir-hospital.com' },
-        registrationNumber: 'BH-2024-001',
-        adminEmail: 'admin@bir-hospital.com'
-      },
-      {
-        name: 'Patan Hospital',
-        address: { street: 'Lagankhel', city: 'Lalitpur', state: 'Central', zipCode: '44700', country: 'Nepal' },
-        contact: { phone: '+977-1-5522266', email: 'info@patan-hospital.com', website: 'www.patan-hospital.com' },
-        registrationNumber: 'PH-2024-002',
-        adminEmail: 'admin@patan-hospital.com'
-      },
-      {
-        name: 'Civil Hospital',
-        address: { street: 'Minbhawan', city: 'Kathmandu', state: 'Central', zipCode: '44600', country: 'Nepal' },
-        contact: { phone: '+977-1-4211119', email: 'info@civil-hospital.com', website: 'www.civil-hospital.com' },
-        registrationNumber: 'CH-2024-003',
-        adminEmail: 'admin@civil-hospital.com'
-      }
-    ];
-
-    for (const hData of hospitalsData) {
-      let hospital = await Hospital.findOne({ registrationNumber: hData.registrationNumber });
-      
-      if (!hospital) {
-        hospital = new Hospital({
-          name: hData.name,
-          address: hData.address,
-          contact: hData.contact,
-          departments: [
-            { name: 'Cardiology', description: 'Heart and cardiovascular care', isActive: true },
-            { name: 'Pediatrics', description: 'Child healthcare', isActive: true },
-            { name: 'Orthopedics', description: 'Bone and joint care', isActive: true },
-            { name: 'General Medicine', description: 'General healthcare', isActive: true }
-          ],
-          capacity: { totalBeds: 150, availableBeds: 50, totalDoctors: 10, totalStaff: 30 },
-          registrationNumber: hData.registrationNumber,
-          adminEmail: hData.adminEmail,
-          isActive: true,
-          status: 'approved'
-        });
-        await hospital.save();
-        console.log(`Hospital created: ${hospital.name}`);
-      }
-
-      // Hospital Admin
-      let hAdmin = await User.findOne({ email: hData.adminEmail });
-      if (!hAdmin) {
-        hAdmin = new User({
-          fullName: `${hospital.name} Administrator`,
-          email: hData.adminEmail,
-          password: 'admin123',
-          role: 'hospital_admin',
-          hospitalId: hospital._id,
-          employeeDetails: {
-            employeeId: `${hData.registrationNumber.split('-')[0]}-ADM-001`,
-            department: 'Administration',
-            isActive: true
-          },
-          isActive: true
-        });
-        await hAdmin.save();
-        console.log(`Hospital admin created for: ${hospital.name}`);
-      }
-
-      // Seed more doctors for Bir Hospital in Cardiology for AI Testing
-      if (hospital.name === 'Bir Hospital') {
-        const cardiologyDoctors = [
-          { name: 'Dr. Arjun Sharma', spec: 'Cardiologist', email: 'arjun@bir.com' },
-          { name: 'Dr. Sandeep Guleria', spec: 'Cardiologist', email: 'sandeep@bir.com' },
-          { name: 'Dr. Om Murti Pant', spec: 'Cardiologist', email: 'om@bir.com' }
+        // 2. Generate 6 Hospitals
+        const hospitals = [];
+        const cities = ['Kathmandu', 'Lalitpur', 'Bhaktapur', 'Pokhara', 'Bharatpur', 'Biratnagar'];
+        const hospitalNames = ['Bir Hospital', 'Patan Hospital', 'Civil Hospital', 'Teaching Hospital', 'Norvic Hospital', 'Medicity Hospital'];
+        const deptsTemplate = [
+            { name: 'General Medicine', description: 'General health' },
+            { name: 'Cardiology', description: 'Heart care' },
+            { name: 'Pediatrics', description: 'Child care' },
+            { name: 'Orthopedics', description: 'Bone care' },
+            { name: 'Neurology', description: 'Brain care' }
         ];
 
-        for (let i = 0; i < cardiologyDoctors.length; i++) {
-          const doc = cardiologyDoctors[i];
-          let existingDoc = await User.findOne({ email: doc.email });
-          if (!existingDoc) {
-            existingDoc = new User({
-              fullName: doc.name,
-              email: doc.email,
-              password: 'doctor123',
-              role: 'doctor',
-              hospitalId: hospital._id,
-              employeeDetails: {
-                employeeId: `BIR-DOC-C${i + 1}`,
-                department: 'Cardiology',
-                specialization: doc.spec,
-                isActive: true
-              },
-              isActive: true
-            });
-            await existingDoc.save();
-          }
-          
-          // Add different queue lengths for each
-          // Arjun: 5 waiting, Sandeep: 1 waiting, Om: 10 waiting
-          const queueCounts = [5, 1, 10]; 
-          const count = queueCounts[i];
-          
-          for (let j = 0; j < count; j++) {
-            const tokenNum = `BIR-C${i+1}-${j+1}`;
-            const existingQueue = await Queue.findOne({ tokenNumber: tokenNum, hospitalId: hospital._id });
-            if (!existingQueue) {
-              await Queue.create({
-                tokenNumber: tokenNum,
-                hospitalId: hospital._id,
-                patientId: patients[j % patients.length]._id,
-                doctorId: existingDoc._id,
-                department: 'Cardiology',
-                status: 'waiting',
-                scheduledTime: new Date(),
-                priority: j % 2 === 0 ? 'normal' : 'high'
-              });
+        for (let i = 0; i < 6; i++) {
+            const cityName = cities[i];
+            const hName = hospitalNames[i];
+            const regNum = `REG-2024-${(i + 1).toString().padStart(3, '0')}`;
+            const hAdminEmail = `admin${i + 1}@${hName.toLowerCase().replace(/\s+/g, '-')}.com`;
+
+            let hospital = await Hospital.findOne({ registrationNumber: regNum });
+            if (!hospital) {
+                hospital = new Hospital({
+                    name: hName,
+                    address: { street: `Street ${i + 1}`, city: cityName, state: 'Nepal', zipCode: '44600', country: 'Nepal' },
+                    contact: { phone: `+977-1-4${i}11119`, email: `info@${hName.toLowerCase().replace(/\s+/g, '-')}.com` },
+                    departments: deptsTemplate.map(d => ({ ...d, isActive: true })),
+                    capacity: { totalBeds: 200, availableBeds: 100, totalDoctors: 20, totalStaff: 50 },
+                    registrationNumber: regNum,
+                    adminEmail: hAdminEmail,
+                    isActive: true,
+                    status: 'approved'
+                });
+                await hospital.save();
             }
-          }
-          console.log(`Seeded ${count} waiting patients for ${doc.name}`);
-        }
-      }
+            hospitals.push(hospital);
 
-      // Seed some doctors for other hospitals (default behavior)
-      if (hospital.name !== 'Bir Hospital') {
-        const doctorNames = ['Dr. Arjun Sharma', 'Dr. Binita Thapa'];
-        for (let i = 0; i < doctorNames.length; i++) {
-          const docEmail = `doctor${i + 1}@${hospital.name.toLowerCase().replace(/\s+/g, '-')}.com`;
-          const existingDoc = await User.findOne({ email: docEmail });
-          if (!existingDoc) {
-            const doctor = new User({
-              fullName: doctorNames[i],
-              email: docEmail,
-              password: 'doctor123',
-              role: 'doctor',
-              hospitalId: hospital._id,
-              employeeDetails: {
-                employeeId: `${hData.registrationNumber.split('-')[0]}-DOC-0${i + 1}`,
-                department: i === 0 ? 'Cardiology' : 'Pediatrics',
-                specialization: i === 0 ? 'Cardiologist' : 'Pediatrician',
-                isActive: true
-              },
-              isActive: true
+            // Hospital Admin
+            let hAdmin = await User.findOne({ email: hAdminEmail });
+            if (!hAdmin) {
+                hAdmin = new User({
+                    fullName: `${hName} Admin`,
+                    email: hAdminEmail,
+                    password: 'admin123',
+                    role: 'hospital_admin',
+                    hospitalId: hospital._id,
+                    isActive: true
+                });
+                await hAdmin.save();
+            }
+        }
+        console.log(`Seeded ${hospitals.length} Hospitals`);
+
+        // 3. Generate 30 Doctors (Ensuring at least 8 for the first hospital for better recommendations)
+        const doctors = [];
+        const doctorsPerHospital = [10, 4, 4, 4, 4, 4]; // 30 doctors total
+        let doctorIndex = 1;
+
+        for (let hIdx = 0; hIdx < hospitals.length; hIdx++) {
+            const hospital = hospitals[hIdx];
+            const countForThisHospital = doctorsPerHospital[hIdx];
+            
+            for (let dIdx = 0; dIdx < countForThisHospital; dIdx++) {
+                const dept = deptsTemplate[dIdx % deptsTemplate.length].name;
+                const email = `doctor${doctorIndex}@hospital${hIdx + 1}.com`;
+
+                let doctor = await User.findOne({ email });
+                if (!doctor) {
+                    doctor = new User({
+                        fullName: `Dr. ${['Arjun', 'Sandeep', 'Binita', 'Sita', 'Hari', 'Maya', 'Raj', 'Anjali', 'Kiran', 'Sunita'][dIdx % 10]} ${['Sharma', 'Guleria', 'Thapa', 'Devi', 'Prasad', 'Rai'][hIdx % 6]}`,
+                        email: email,
+                        password: 'doctor123',
+                        role: 'doctor',
+                        hospitalId: hospital._id,
+                        employeeDetails: {
+                            employeeId: `DOC-${doctorIndex.toString().padStart(3, '0')}`,
+                            department: dept,
+                            specialization: `${dept} Specialist`,
+                            avgConsultationTime: 10 + (doctorIndex % 10), // 10 to 19 mins
+                            isActive: true
+                        },
+                        isActive: true
+                    });
+                    await doctor.save();
+                }
+                doctors.push(doctor);
+                doctorIndex++;
+            }
+        }
+        console.log(`Seeded ${doctors.length} Doctors`);
+
+        // 4. Generate 30 Patients
+        const patients = [];
+        for (let i = 1; i <= 30; i++) {
+            const email = `patient${i}@example.com`;
+            let patient = await Patient.findOne({ email });
+            if (!patient) {
+                const hospital = hospitals[i % hospitals.length];
+                patient = new Patient({
+                    patientId: `P-${i.toString().padStart(4, '0')}`,
+                    hospitalId: hospital._id,
+                    fullName: `Patient ${i}`,
+                    email: email,
+                    phone: `9841${i.toString().padStart(6, '0')}`,
+                    dateOfBirth: new Date(1990, 0, i),
+                    gender: i % 2 === 0 ? 'male' : 'female',
+                    address: { city: 'Kathmandu', state: 'Bagmati', street: 'Street', zipCode: '44600' },
+                    emergencyContact: { name: 'Emergency', relationship: 'Family', phone: '9800000000' }
+                });
+                await patient.save();
+
+                // Create User for patient
+                let pUser = await User.findOne({ email });
+                if (!pUser) {
+                    await User.create({
+                        fullName: patient.fullName,
+                        email: patient.email,
+                        password: 'patient123',
+                        role: 'patient',
+                        isActive: true
+                    });
+                }
+            }
+            patients.push(patient);
+        }
+        console.log(`Seeded ${patients.length} Patients`);
+
+        // 5. Generate 40 Queue Entries
+        for (let i = 0; i < 40; i++) {
+            const patient = patients[i % patients.length];
+            const doctor = doctors[i % doctors.length];
+            const tokenNum = `T-${(i + 1).toString().padStart(4, '0')}`;
+
+            await Queue.create({
+                tokenNumber: tokenNum,
+                hospitalId: doctor.hospitalId,
+                patientId: patient._id,
+                doctorId: doctor._id,
+                department: doctor.employeeDetails.department,
+                status: i % 8 === 0 ? 'completed' : 'waiting',
+                scheduledTime: new Date(),
+                priority: i % 10 === 0 ? 'high' : 'normal',
+                estimatedWaitTime: 5 * (i % 5)
             });
-            await doctor.save();
-          }
         }
-      }
+        console.log('Seeded 40 Queue entries');
 
-      // Add some patients if not already added
-      const patientsData = [
-        { fullName: 'Hari Prasad', email: 'hari@example.com', patientId: `${hData.registrationNumber.split('-')[0]}-P-001` },
-        { fullName: 'Sita Devi', email: 'sita@example.com', patientId: `${hData.registrationNumber.split('-')[0]}-P-002` },
-        { fullName: 'Ram Bahadur', email: 'ram@example.com', patientId: `${hData.registrationNumber.split('-')[0]}-P-003` }
-      ];
-
-      const patients = [];
-      for (const pData of patientsData) {
-        let patient = await Patient.findOne({ email: pData.email, hospitalId: hospital._id });
-        if (!patient) {
-          patient = new Patient({
-            ...pData,
-            hospitalId: hospital._id,
-            phone: '9841000000',
-            dateOfBirth: new Date('1990-01-01'),
-            gender: 'other',
-            address: { city: 'Kathmandu', state: 'Bagmati', street: 'Koteshwor', zipCode: '44600' },
-            emergencyContact: { name: 'Friend', relationship: 'Friend', phone: '9800000000' }
-          });
-          await patient.save();
-          
-          // Also create a User record for the patient so they can log in
-          const existingUser = await User.findOne({ email: pData.email });
-          if (!existingUser) {
-            await User.create({
-              fullName: pData.fullName,
-              email: pData.email,
-              password: 'patient123',
-              role: 'patient',
-              isActive: true
+        // 6. Generate 30 Notifications
+        const Notification = require('./models/Notification');
+        for (let i = 1; i <= 30; i++) {
+            const patient = patients[i % patients.length];
+            const hospital = hospitals[i % hospitals.length];
+            await Notification.create({
+                patientId: patient._id,
+                hospitalId: hospital._id,
+                title: `Notification ${i}`,
+                message: `This is test notification ${i} for ${patient.fullName}`,
+                type: 'general',
+                isRead: i % 3 === 0
             });
-          }
         }
-        patients.push(patient);
-      }
+        console.log('Seeded 30 Notification entries');
+
+        console.log('\n=== SEED DATA COMPLETED (30+ rows per table) ===');
+        process.exit(0);
+    } catch (error) {
+        console.error('Seeding error full trace:', error);
+        process.exit(1);
     }
-
-    console.log('\n=== SEED DATA COMPLETED ===');
-    console.log('Use Bir Hospital Cardiology for AI Testing:');
-    console.log('- Dr. Sandeep Guleria should be recommended (Shortest queue: 1)');
-    console.log('- Dr. Arjun Sharma (Queue: 5)');
-    console.log('- Dr. Om Murti Pant (Queue: 10)');
-    console.log('===========================\n');
-
-    process.exit(0);
-  } catch (error) {
-    console.error('Seeding error:', error);
-    process.exit(1);
-  }
 };
 
 seedData();

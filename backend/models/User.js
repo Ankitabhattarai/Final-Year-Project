@@ -51,6 +51,7 @@ const userSchema = new mongoose.Schema({
     specialization: { type: String, trim: true },
     licenseNumber: { type: String, trim: true },
     joinDate: { type: Date },
+    avgConsultationTime: { type: Number, default: 15 }, // in minutes
     isActive: { type: Boolean, default: true }
   },
   isActive: {
