@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ChatWidget from '../../components/common/ChatWidgets';
-import { Ticket, Clock, CalendarDays, Building2, Loader2, CheckCircle2 } from 'lucide-react';
+import { Ticket, Clock, CalendarDays, Building2, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
 import patientDashboardService from '@/services/patientDashboardService';
 import { toast } from 'sonner';
 import AIRecommendations from '../../components/common/AIRecommendations';
@@ -16,6 +16,7 @@ export default function PatientDashboard() {
   const [departments, setDepartments] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [myQueue, setMyQueue] = useState([]);
+  const [quickSuggestion, setQuickSuggestion] = useState(null);
 
   // Selection states
   const [selectedHospital, setSelectedHospital] = useState('');
@@ -48,12 +49,14 @@ export default function PatientDashboard() {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const [hResp, qResp] = await Promise.all([
+      const [hResp, qResp, sResp] = await Promise.all([
         patientDashboardService.getHospitals(),
-        patientDashboardService.getMyQueue()
+        patientDashboardService.getMyQueue(),
+        patientDashboardService.getQuickSuggestion()
       ]);
       setHospitals(hResp.data || []);
       setMyQueue(qResp.data || []);
+      setQuickSuggestion(sResp.data || null);
     } catch (error) {
       console.error('Error fetching patient data:', error);
     } finally {
@@ -142,6 +145,34 @@ export default function PatientDashboard() {
     }
   };
 
+  const handleQuickBook = async (suggestion) => {
+    try {
+      setSubmitting(true);
+      const payload = {
+        hospitalId: suggestion.hospital_id,
+        department: suggestion.department,
+        doctorId: suggestion.doctor_id
+      };
+
+      await patientDashboardService.bookToken(payload);
+
+      // Refresh queue and suggestion
+      const [qResp, sResp] = await Promise.all([
+        patientDashboardService.getMyQueue(),
+        patientDashboardService.getQuickSuggestion()
+      ]);
+      setMyQueue(qResp.data || []);
+      setQuickSuggestion(sResp.data || null);
+
+      toast.success(`Successfully booked with Dr. ${suggestion.doctor_name}`);
+    } catch (error) {
+      console.error('Quick book error:', error);
+      toast.error(error.response?.data?.message || 'Error booking quick token');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const activeToken = myQueue.find(t => t.status === 'waiting' || t.status === 'in_progress');
 
   if (loading) {
@@ -162,6 +193,59 @@ export default function PatientDashboard() {
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Patient Dashboard</h1>
           <p className="text-lg text-gray-600">Welcome back, {user?.fullName || 'Patient'}</p>
         </div>
+
+        {/* Proactive Recommendation Section */}
+        {quickSuggestion && (
+          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-8 text-white shadow-xl shadow-blue-200 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-10">
+                <Sparkles size={120} className="text-white" />
+              </div>
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                <div className="flex-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-widest mb-4 backdrop-blur-md">
+                    <Sparkles size={14} className="text-yellow-300" />
+                    Recommended for You
+                  </div>
+                  <h2 className="text-3xl font-black mb-2">Dr. {quickSuggestion.doctor_name}</h2>
+                  <p className="text-lg text-blue-100 font-medium mb-6">
+                    {quickSuggestion.specialization} • {quickSuggestion.hospital_name}
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 flex items-center gap-3">
+                      <div className="p-2 bg-white/20 rounded-lg">
+                        <Clock size={20} className="text-white" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-blue-100 opacity-80">Estimated Wait</p>
+                        <p className="text-xl font-bold">{Math.round(quickSuggestion.predicted_wait_min)} Min</p>
+                      </div>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 flex items-center gap-3">
+                      <div className="p-2 bg-white/20 rounded-lg">
+                        <Building2 size={20} className="text-white" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-blue-100 opacity-80">Department</p>
+                        <p className="text-xl font-bold">{quickSuggestion.department}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  <button
+                    disabled={submitting}
+                    onClick={() => handleQuickBook(quickSuggestion)}
+                    className="group bg-white hover:bg-blue-50 text-blue-700 px-10 py-5 rounded-2xl font-black text-xl shadow-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center gap-3"
+                  >
+                    {submitting ? <Loader2 className="animate-spin" size={24} /> : <Ticket size={24} />}
+                    Book Token Now
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Book Appointment Section */}
         <div className="grid lg:grid-cols-3 gap-6 mb-12">

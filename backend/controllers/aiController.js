@@ -38,6 +38,8 @@ const runPythonScript = (scriptName, inputData) => {
 /**
  * GET wait time prediction for a specific doctor
  */
+
+
 exports.predictWaitTime = async (req, res) => {
     try {
         const { doctorId, departmentId, priority = 'normal', hospitalId: queryHospitalId } = req.query;
@@ -138,6 +140,82 @@ exports.getRecommendations = async (req, res) => {
         });
     } catch (error) {
         console.error('AI Recommendation error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * GET a proactive quick suggestion for a new patient
+ */
+exports.getQuickSuggestion = async (req, res) => {
+    try {
+        const Hospital = require('../models/Hospital');
+        
+        // 1. Find the first hospital if none is specified (or could be based on user location/history)
+        const hospital = await Hospital.findOne({ isActive: true });
+        if (!hospital) {
+            return res.json({ success: true, data: null });
+        }
+
+        // 2. Define priority departments for quick suggestions
+        const priorityDepts = ['General Medicine', 'Internal Medicine', 'Emergency', 'Cardiology'];
+        
+        // 3. Find doctors in these departments at this hospital
+        let doctors = await User.find({
+            hospitalId: hospital._id,
+            role: 'doctor',
+            'employeeDetails.department': { $in: priorityDepts },
+            isActive: true
+        });
+
+        // If no doctors in priority depts, just get any doctors
+        if (doctors.length === 0) {
+            doctors = await User.find({
+                hospitalId: hospital._id,
+                role: 'doctor',
+                isActive: true
+            }).limit(5);
+        }
+
+        if (doctors.length === 0) {
+            return res.json({ success: true, data: null });
+        }
+
+        // 4. Prepare data for the recommendation engine
+        const options = await Promise.all(doctors.map(async (doc) => {
+            const queueLength = await Queue.countDocuments({
+                hospitalId: hospital._id,
+                doctorId: doc._id,
+                status: 'waiting'
+            });
+
+            const now = new Date();
+            return {
+                doctor_id: doc._id.toString(),
+                doctor_name: doc.fullName,
+                specialization: doc.employeeDetails.specialization,
+                department: doc.employeeDetails.department,
+                hospital_name: hospital.name,
+                hospital_id: hospital._id.toString(),
+                queue_length: queueLength,
+                avg_consult_time: 15,
+                day_of_week: now.getDay(),
+                hour_of_day: now.getHours(),
+                priority: 1,
+                no_show_rate: 0.1,
+                department_id: 1 
+            };
+        }));
+
+        // 5. Use the recommendation script to pick the best one
+        const result = await runPythonScript('recommend.py', options);
+        
+        res.json({
+            success: true,
+            data: result.recommended
+        });
+    } catch (error) {
+        console.error('AI Quick Suggestion error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

@@ -117,31 +117,87 @@ const seedData = async () => {
         console.log(`Hospital admin created for: ${hospital.name}`);
       }
 
-      // Seed some doctors for this hospital
-      const doctorNames = ['Dr. Arjun Sharma', 'Dr. Binita Thapa'];
-      for (let i = 0; i < doctorNames.length; i++) {
-        const docEmail = `doctor${i + 1}@${hospital.name.toLowerCase().replace(/\s+/g, '-')}.com`;
-        const existingDoc = await User.findOne({ email: docEmail });
-        if (!existingDoc) {
-          const doctor = new User({
-            fullName: doctorNames[i],
-            email: docEmail,
-            password: 'doctor123',
-            role: 'doctor',
-            hospitalId: hospital._id,
-            employeeDetails: {
-              employeeId: `${hData.registrationNumber.split('-')[0]}-DOC-0${i + 1}`,
-              department: i === 0 ? 'Cardiology' : 'Pediatrics',
-              specialization: i === 0 ? 'Cardiologist' : 'Pediatrician',
+      // Seed more doctors for Bir Hospital in Cardiology for AI Testing
+      if (hospital.name === 'Bir Hospital') {
+        const cardiologyDoctors = [
+          { name: 'Dr. Arjun Sharma', spec: 'Cardiologist', email: 'arjun@bir.com' },
+          { name: 'Dr. Sandeep Guleria', spec: 'Cardiologist', email: 'sandeep@bir.com' },
+          { name: 'Dr. Om Murti Pant', spec: 'Cardiologist', email: 'om@bir.com' }
+        ];
+
+        for (let i = 0; i < cardiologyDoctors.length; i++) {
+          const doc = cardiologyDoctors[i];
+          let existingDoc = await User.findOne({ email: doc.email });
+          if (!existingDoc) {
+            existingDoc = new User({
+              fullName: doc.name,
+              email: doc.email,
+              password: 'doctor123',
+              role: 'doctor',
+              hospitalId: hospital._id,
+              employeeDetails: {
+                employeeId: `BIR-DOC-C${i + 1}`,
+                department: 'Cardiology',
+                specialization: doc.spec,
+                isActive: true
+              },
               isActive: true
-            },
-            isActive: true
-          });
-          await doctor.save();
+            });
+            await existingDoc.save();
+          }
+          
+          // Add different queue lengths for each
+          // Arjun: 5 waiting, Sandeep: 1 waiting, Om: 10 waiting
+          const queueCounts = [5, 1, 10]; 
+          const count = queueCounts[i];
+          
+          for (let j = 0; j < count; j++) {
+            const tokenNum = `BIR-C${i+1}-${j+1}`;
+            const existingQueue = await Queue.findOne({ tokenNumber: tokenNum, hospitalId: hospital._id });
+            if (!existingQueue) {
+              await Queue.create({
+                tokenNumber: tokenNum,
+                hospitalId: hospital._id,
+                patientId: patients[j % patients.length]._id,
+                doctorId: existingDoc._id,
+                department: 'Cardiology',
+                status: 'waiting',
+                scheduledTime: new Date(),
+                priority: j % 2 === 0 ? 'normal' : 'high'
+              });
+            }
+          }
+          console.log(`Seeded ${count} waiting patients for ${doc.name}`);
         }
       }
 
-      // 3. Seed some Patients and Queue History for testing wait times
+      // Seed some doctors for other hospitals (default behavior)
+      if (hospital.name !== 'Bir Hospital') {
+        const doctorNames = ['Dr. Arjun Sharma', 'Dr. Binita Thapa'];
+        for (let i = 0; i < doctorNames.length; i++) {
+          const docEmail = `doctor${i + 1}@${hospital.name.toLowerCase().replace(/\s+/g, '-')}.com`;
+          const existingDoc = await User.findOne({ email: docEmail });
+          if (!existingDoc) {
+            const doctor = new User({
+              fullName: doctorNames[i],
+              email: docEmail,
+              password: 'doctor123',
+              role: 'doctor',
+              hospitalId: hospital._id,
+              employeeDetails: {
+                employeeId: `${hData.registrationNumber.split('-')[0]}-DOC-0${i + 1}`,
+                department: i === 0 ? 'Cardiology' : 'Pediatrics',
+                specialization: i === 0 ? 'Cardiologist' : 'Pediatrician',
+                isActive: true
+              },
+              isActive: true
+            });
+            await doctor.save();
+          }
+        }
+      }
+
+      // Add some patients if not already added
       const patientsData = [
         { fullName: 'Hari Prasad', email: 'hari@example.com', patientId: `${hData.registrationNumber.split('-')[0]}-P-001` },
         { fullName: 'Sita Devi', email: 'sita@example.com', patientId: `${hData.registrationNumber.split('-')[0]}-P-002` },
@@ -173,77 +229,17 @@ const seedData = async () => {
               role: 'patient',
               isActive: true
             });
-            console.log(`User account created for patient: ${pData.email}`);
           }
         }
         patients.push(patient);
       }
-
-      // Seed Queue Entries for Dr. Arjun Sharma in Cardiology
-      const arjunDoc = await User.findOne({ fullName: 'Dr. Arjun Sharma', hospitalId: hospital._id });
-      if (arjunDoc) {
-        // Add 5 completed entries with varying consultation times (avg ~12 mins)
-        const consultationTimes = [15, 10, 12, 8, 15];
-        const statusHistory = ['completed', 'completed', 'completed', 'completed', 'completed'];
-        
-        for (let i = 0; i < consultationTimes.length; i++) {
-          const checkTime = new Date();
-          checkTime.setHours(checkTime.getHours() - (i + 1)); // Back in time
-          
-          const callTime = new Date(checkTime);
-          callTime.setMinutes(callTime.getMinutes() + 5);
-          
-          const compTime = new Date(callTime);
-          compTime.setMinutes(compTime.getMinutes() + consultationTimes[i]);
-
-          const tokenNum = `HIST-${String(i + 1).padStart(3, '0')}`;
-          
-          const existingQueue = await Queue.findOne({ tokenNumber: tokenNum, hospitalId: hospital._id });
-          if (!existingQueue) {
-            await Queue.create({
-              tokenNumber: tokenNum,
-              hospitalId: hospital._id,
-              patientId: patients[i % patients.length]._id,
-              doctorId: arjunDoc._id,
-              department: 'Cardiology',
-              status: 'completed',
-              scheduledTime: checkTime,
-              checkedInTime: checkTime,
-              calledTime: callTime,
-              completedTime: compTime,
-              consultationTime: consultationTimes[i],
-              actualWaitTime: 5
-            });
-          }
-        }
-
-        // Add 2 waiting patients for today
-        const today = new Date();
-        today.setHours(9, 0, 0, 0);
-
-        for (let i = 0; i < 2; i++) {
-          const tokenNum = `W-${String(i + 1).padStart(3, '0')}`;
-          const existingQueue = await Queue.findOne({ tokenNumber: tokenNum, hospitalId: hospital._id });
-          if (!existingQueue) {
-            await Queue.create({
-              tokenNumber: tokenNum,
-              hospitalId: hospital._id,
-              patientId: patients[i % patients.length]._id,
-              doctorId: arjunDoc._id,
-              department: 'Cardiology',
-              status: 'waiting',
-              scheduledTime: new Date(today.getTime() + i * 30 * 60000),
-              estimatedWaitTime: 24 // 2 people * 12 min avg
-            });
-          }
-        }
-      }
     }
 
     console.log('\n=== SEED DATA COMPLETED ===');
-    console.log('System Admin: system.admin@careline.com / admin123');
-    console.log('Hospital Admins: See hospital info for emails (Password: admin123)');
-    console.log('Usage: node seed.js [--reset]');
+    console.log('Use Bir Hospital Cardiology for AI Testing:');
+    console.log('- Dr. Sandeep Guleria should be recommended (Shortest queue: 1)');
+    console.log('- Dr. Arjun Sharma (Queue: 5)');
+    console.log('- Dr. Om Murti Pant (Queue: 10)');
     console.log('===========================\n');
 
     process.exit(0);
