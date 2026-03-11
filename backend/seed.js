@@ -47,7 +47,7 @@ const seedData = async () => {
             console.log('Created System Admin');
         }
 
-        // 2. Generate 6 Hospitals (to get 30 doctors with 5 each)
+        // 2. Generate 6 Hospitals
         const hospitals = [];
         const cities = ['Kathmandu', 'Lalitpur', 'Bhaktapur', 'Pokhara', 'Bharatpur', 'Biratnagar'];
         const hospitalNames = ['Bir Hospital', 'Patan Hospital', 'Civil Hospital', 'Teaching Hospital', 'Norvic Hospital', 'Medicity Hospital'];
@@ -65,7 +65,7 @@ const seedData = async () => {
             const regNum = `REG-2024-${(i + 1).toString().padStart(3, '0')}`;
             const hAdminEmail = `admin${i + 1}@${hName.toLowerCase().replace(/\s+/g, '-')}.com`;
 
-            let hospital = await Hospital.findOne({ name: hName });
+            let hospital = await Hospital.findOne({ registrationNumber: regNum });
             if (!hospital) {
                 hospital = new Hospital({
                     name: hName,
@@ -98,19 +98,23 @@ const seedData = async () => {
         }
         console.log(`Seeded ${hospitals.length} Hospitals`);
 
-        // 3. Generate 30 Doctors (5 per hospital)
+        // 3. Generate 30 Doctors (Ensuring at least 8 for the first hospital for better recommendations)
         const doctors = [];
+        const doctorsPerHospital = [10, 4, 4, 4, 4, 4]; // 30 doctors total
+        let doctorIndex = 1;
+
         for (let hIdx = 0; hIdx < hospitals.length; hIdx++) {
             const hospital = hospitals[hIdx];
-            for (let dIdx = 0; dIdx < 5; dIdx++) {
-                const doctorIndex = (hIdx * 5) + dIdx + 1;
-                const dept = deptsTemplate[dIdx].name;
+            const countForThisHospital = doctorsPerHospital[hIdx];
+            
+            for (let dIdx = 0; dIdx < countForThisHospital; dIdx++) {
+                const dept = deptsTemplate[dIdx % deptsTemplate.length].name;
                 const email = `doctor${doctorIndex}@hospital${hIdx + 1}.com`;
 
                 let doctor = await User.findOne({ email });
                 if (!doctor) {
                     doctor = new User({
-                        fullName: `Dr. ${['Arjun', 'Sandeep', 'Binita', 'Sita', 'Hari'][dIdx]} ${['Sharma', 'Guleria', 'Thapa', 'Devi', 'Prasad'][hIdx % 5]}`,
+                        fullName: `Dr. ${['Arjun', 'Sandeep', 'Binita', 'Sita', 'Hari', 'Maya', 'Raj', 'Anjali', 'Kiran', 'Sunita'][dIdx % 10]} ${['Sharma', 'Guleria', 'Thapa', 'Devi', 'Prasad', 'Rai'][hIdx % 6]}`,
                         email: email,
                         password: 'doctor123',
                         role: 'doctor',
@@ -119,6 +123,7 @@ const seedData = async () => {
                             employeeId: `DOC-${doctorIndex.toString().padStart(3, '0')}`,
                             department: dept,
                             specialization: `${dept} Specialist`,
+                            avgConsultationTime: 10 + (doctorIndex % 10), // 10 to 19 mins
                             isActive: true
                         },
                         isActive: true
@@ -126,9 +131,10 @@ const seedData = async () => {
                     await doctor.save();
                 }
                 doctors.push(doctor);
+                doctorIndex++;
             }
         }
-        console.log(`Seeded ${doctors.length} Doctors (5 per hospital)`);
+        console.log(`Seeded ${doctors.length} Doctors`);
 
         // 4. Generate 30 Patients
         const patients = [];
@@ -166,7 +172,7 @@ const seedData = async () => {
         }
         console.log(`Seeded ${patients.length} Patients`);
 
-        // 5. Generate 30 Queue Entries
+        // 5. Generate 40 Queue Entries
         for (let i = 0; i < 40; i++) {
             const patient = patients[i % patients.length];
             const doctor = doctors[i % doctors.length];
@@ -178,7 +184,7 @@ const seedData = async () => {
                 patientId: patient._id,
                 doctorId: doctor._id,
                 department: doctor.employeeDetails.department,
-                status: i % 5 === 0 ? 'completed' : 'waiting',
+                status: i % 8 === 0 ? 'completed' : 'waiting',
                 scheduledTime: new Date(),
                 priority: i % 10 === 0 ? 'high' : 'normal',
                 estimatedWaitTime: 5 * (i % 5)
