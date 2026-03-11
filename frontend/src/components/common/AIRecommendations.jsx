@@ -72,15 +72,19 @@ const AIRecommendations = ({ department, hospitalId }) => {
                         </div>
                         <div className="flex justify-between items-start">
                             <div>
-                                <h3 className="text-lg font-bold mb-1">{recommendations.recommended.option.doctor_name}</h3>
+                                <h3 className="text-lg font-bold mb-1">{recommendations.recommended.doctor_name}</h3>
                                 <p className="text-sm text-indigo-100 flex items-center gap-1.5">
                                     <User className="w-3.5 h-3.5" />
-                                    {recommendations.recommended.option.specialization}
+                                    {recommendations.recommended.specialization}
                                 </p>
                             </div>
                             <div className="text-right">
-                                <div className="text-2xl font-black">{Math.round(recommendations.recommended.predicted_wait_min)}</div>
-                                <div className="text-[10px] font-medium opacity-80">EST. MINUTES</div>
+                                <div className="text-2xl font-black">
+                                    {recommendations.recommended.available_at || `${Math.round(recommendations.recommended.predicted_wait_min)}m`}
+                                </div>
+                                <div className="text-[10px] font-medium opacity-80 uppercase">
+                                    {recommendations.recommended.available_at ? 'Available' : 'Est. Minutes'}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -89,7 +93,7 @@ const AIRecommendations = ({ department, hospitalId }) => {
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Other Options</h4>
                         <div className="grid gap-3">
                             {recommendations.all_results
-                                .filter(res => res.option.doctor_id !== recommendations.recommended.option.doctor_id)
+                                .filter(res => res.doctor_id !== recommendations.recommended.doctor_id)
                                 .map((res, idx) => (
                                     <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-white hover:border-indigo-200 transition-all cursor-default group">
                                         <div className="flex items-center gap-3">
@@ -97,13 +101,13 @@ const AIRecommendations = ({ department, hospitalId }) => {
                                                 <User className="w-4 h-4" />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-semibold text-gray-700">{res.option.doctor_name}</p>
-                                                <p className="text-[10px] text-gray-400 font-medium">Patients ahead: {res.option.queue_length}</p>
+                                                <p className="text-sm font-semibold text-gray-700">{res.doctor_name}</p>
+                                                <p className="text-[10px] text-gray-400 font-medium">Patients ahead: {res.queue_length}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-1.5 text-gray-500 font-medium">
                                             <Clock className="w-3.5 h-3.5" />
-                                            <span className="text-sm">{Math.round(res.predicted_wait_min)}m</span>
+                                            <span className="text-sm">{res.available_at || `${Math.round(res.predicted_wait_min)}m`}</span>
                                         </div>
                                     </div>
                                 ))}

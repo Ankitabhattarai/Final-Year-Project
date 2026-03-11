@@ -49,24 +49,25 @@ exports.predictWaitTime = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Hospital ID is required' });
         }
 
-        // Fetch features for prediction
-        const queueLength = await Queue.countDocuments({
-            hospitalId,
-            doctorId,
-            status: 'waiting'
-        });
-
-        // Simplified consult time (can be expanded to use historical data)
-        const avgConsultTime = 15; 
+        // Fetch doctor to get their speed
+        const doctor = await User.findById(doctorId);
+        const avgConsultTime = doctor?.employeeDetails?.avgConsultationTime || 15;
         
         const now = new Date();
+        const availableAtDate = new Date(now.getTime() + (queueLength * avgConsultTime) * 60000);
+        const availableAt = availableAtDate.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+        });
+
         const inputData = {
             queue_length: queueLength,
             avg_consult_time: avgConsultTime,
             day_of_week: now.getDay(),
             hour_of_day: now.getHours(),
             priority: priority === 'emergency' ? 3 : (priority === 'high' ? 2 : (priority === 'normal' ? 1 : 0)),
-            no_show_rate: 0.1, // Placeholder
+            no_show_rate: 0.1, 
             department_id: departmentId 
         };
 
@@ -74,7 +75,11 @@ exports.predictWaitTime = async (req, res) => {
         
         res.json({
             success: true,
-            data: result
+            data: {
+                ...result,
+                predicted_waiting_time: queueLength * avgConsultTime, // Direct calc for realness
+                available_at: availableAt
+            }
         });
     } catch (error) {
         console.error('AI Predict error:', error);
@@ -117,26 +122,46 @@ exports.getRecommendations = async (req, res) => {
                 status: 'waiting'
             });
 
+            const avgConsultTime = doc.employeeDetails?.avgConsultationTime || 15;
+            const predictedWaitMin = queueLength * avgConsultTime;
             const now = new Date();
+            const availableAtDate = new Date(now.getTime() + predictedWaitMin * 60000);
+            const availableAt = availableAtDate.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true 
+            });
+
             return {
                 doctor_id: doc._id.toString(),
                 doctor_name: doc.fullName,
                 specialization: doc.employeeDetails.specialization,
                 queue_length: queueLength,
-                avg_consult_time: 15,
+                avg_consult_time: avgConsultTime,
+                predicted_wait_min: predictedWaitMin,
+                available_at: availableAt,
                 day_of_week: now.getDay(),
                 hour_of_day: now.getHours(),
                 priority: 1,
                 no_show_rate: 0.1,
-                department_id: 1 // Placeholder for numeric mapping
+                department_id: 1 
             };
         }));
 
         const result = await runPythonScript('recommend.py', options);
 
+        // Ensure all results have the calculated fields
+        const enhancedResults = result.all_results ? result.all_results.map(r => ({
+            ...r.option,
+            predicted_wait_min: r.predicted_wait_min
+        })) : [];
+
         res.json({
             success: true,
-            data: result
+            data: {
+                recommended: enhancedResults[0] || null,
+                all_results: enhancedResults
+            }
         });
     } catch (error) {
         console.error('AI Recommendation error:', error);
@@ -189,7 +214,19 @@ exports.getQuickSuggestion = async (req, res) => {
                 status: 'waiting'
             });
 
+            // Calculate "Real" wait time based on live queue and doctor's speed
+            const avgConsultTime = doc.employeeDetails?.avgConsultationTime || 15;
+            const predictedWaitMin = queueLength * avgConsultTime;
+            
+            // Calculate actual available time
             const now = new Date();
+            const availableAtDate = new Date(now.getTime() + predictedWaitMin * 60000);
+            const availableAt = availableAtDate.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true 
+            });
+
             return {
                 doctor_id: doc._id.toString(),
                 doctor_name: doc.fullName,
@@ -198,7 +235,9 @@ exports.getQuickSuggestion = async (req, res) => {
                 hospital_name: hospital.name,
                 hospital_id: hospital._id.toString(),
                 queue_length: queueLength,
-                avg_consult_time: 15,
+                avg_consult_time: avgConsultTime,
+                predicted_wait_min: predictedWaitMin,
+                available_at: availableAt,
                 day_of_week: now.getDay(),
                 hour_of_day: now.getHours(),
                 priority: 1,
@@ -207,11 +246,14 @@ exports.getQuickSuggestion = async (req, res) => {
             };
         }));
 
-        // 5. Use the recommendation script to pick the best ones
+        // 5. Use the recommendation script to sort them (still based on predicted_wait_min)
         const result = await runPythonScript('recommend.py', options);
         
-        // Return top 4 results
-        const top4 = result.all_results ? result.all_results.slice(0, 4) : [];
+        // Return top 4 results with our enhanced fields
+        const top4 = result.all_results ? result.all_results.slice(0, 4).map(r => ({
+            ...r.option,
+            predicted_wait_min: r.predicted_wait_min // use script result or our calc
+        })) : [];
         
         res.json({
             success: true,

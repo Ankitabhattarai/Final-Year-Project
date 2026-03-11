@@ -194,60 +194,6 @@ export default function PatientDashboard() {
           <p className="text-lg text-gray-600">Welcome back, {user?.fullName || 'Patient'}</p>
         </div>
 
-        {/* Proactive Recommendations Section */}
-        {quickSuggestions && quickSuggestions.length > 0 && (
-          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-indigo-50 rounded-lg">
-                <Sparkles className="w-5 h-5 text-indigo-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800">Recommended for You</h2>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {quickSuggestions.map((suggestion, idx) => {
-                const doc = suggestion.option || suggestion;
-                const waitTime = Math.round(suggestion.predicted_wait_min);
-                
-                return (
-                  <div key={idx} className="group relative bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all duration-300 flex flex-col h-full">
-                    <div className="absolute top-4 right-4 text-indigo-100 group-hover:text-indigo-500 transition-colors">
-                      <Sparkles size={24} />
-                    </div>
-                    
-                    <div className="mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-4 group-hover:scale-110 transition-transform">
-                        <User size={24} />
-                      </div>
-                      <h3 className="text-lg font-bold text-slate-900 line-clamp-1">Dr. {doc.doctor_name}</h3>
-                      <p className="text-sm font-semibold text-indigo-600">{doc.department}</p>
-                    </div>
-
-                    <div className="mt-auto space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl group-hover:bg-indigo-50 transition-colors">
-                        <div className="flex items-center gap-2">
-                          <Clock size={16} className="text-slate-400" />
-                          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Wait Time</span>
-                        </div>
-                        <span className="text-lg font-black text-slate-900 group-hover:text-indigo-700">{waitTime}m</span>
-                      </div>
-
-                      <button
-                        disabled={submitting}
-                        onClick={() => handleQuickBook(doc.doctor_id ? doc : suggestion)}
-                        className="w-full bg-slate-900 hover:bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {submitting ? <Loader2 className="animate-spin" size={16} /> : <Ticket size={16} />}
-                        Book Token
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* Book Appointment Section */}
         <div className="grid lg:grid-cols-3 gap-6 mb-12">
           {/* Book */}
@@ -347,6 +293,62 @@ export default function PatientDashboard() {
           </div>
         </div>
 
+   {/* Proactive Recommendations Section */}
+        {quickSuggestions && quickSuggestions.length > 0 && (
+          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-indigo-50 rounded-lg">
+                <Sparkles className="w-5 h-5 text-indigo-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800">Recommended for You</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {quickSuggestions.map((suggestion, idx) => {
+                const doc = suggestion.option || suggestion;
+                const waitTime = Math.round(suggestion.predicted_wait_min);
+                
+                return (
+                  <div key={idx} className="group relative bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all duration-300 flex flex-col h-full">
+                    <div className="absolute top-4 right-4 text-indigo-100 group-hover:text-indigo-500 transition-colors">
+                      <Sparkles size={24} />
+                    </div>
+                    
+                    <div className="mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-4 group-hover:scale-110 transition-transform">
+                        <User size={24} />
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-900 line-clamp-1">Dr. {doc.doctor_name}</h3>
+                      <p className="text-sm font-semibold text-indigo-600">{doc.department}</p>
+                    </div>
+
+                    <div className="mt-auto space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl group-hover:bg-indigo-50 transition-colors">
+                        <div className="flex items-center gap-2">
+                          <Clock size={16} className="text-slate-400" />
+                          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Available At</span>
+                        </div>
+                        <span className="text-sm font-bold text-slate-900">
+                          {doc.available_at || `${waitTime}m`}
+                        </span>
+                      </div>
+
+                      <button
+                        disabled={submitting}
+                        onClick={() => handleQuickBook(doc.doctor_id ? doc : suggestion)}
+                        className="w-full bg-slate-900 hover:bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {submitting ? <Loader2 className="animate-spin" size={16} /> : <Ticket size={16} />}
+                        Book Token
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        
         {/* AI Recommended Slots */}
         {selectedDept && selectedHospital && (
           <div className="mb-12">
