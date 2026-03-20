@@ -65,16 +65,7 @@ export default function Login({ onNavigateToSignup, onNavigateToLanding, onLogin
 
         setSuccessMessage(`Welcome back, ${data.user.fullName}! Redirecting...`);
 
-        // Redirect based on role
-        setTimeout(() => {
-          if (data.user.role === 'doctor') {
-            onLoginSuccess('doctorDashboard');
-          } else if (data.user.role === 'admin' || data.user.role === 'hospital_admin') {
-            onLoginSuccess('adminDashboard');
-          } else {
-            onLoginSuccess('dashboard');
-          }
-        }, 1000);
+        onLoginSuccess(data.user);
       } else {
         setErrors({ general: data.message });
       }

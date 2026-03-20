@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useApi } from "../../context/ApiContext";
+import { useAuth } from "../../context/AuthContext";
 import "./Signup.css";
 
 export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignupSuccess }) {
   const { apiFetch } = useApi();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -83,9 +85,7 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
           return;
         }
 
-        // Store token in localStorage
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        login(data.user, data.token);
 
         setSuccessMessage("Account created successfully! Redirecting...");
 

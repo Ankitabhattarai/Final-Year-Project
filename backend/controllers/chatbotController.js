@@ -1,7 +1,11 @@
 const Hospital = require("../models/Hospital");
 const User = require("../models/User");
 
-const FREE_MODELS = "google/gemma-3-4b-it:free";
+const FREE_MODELS = [
+  "liquid/lfm-2.5-1.2b-instruct:free",
+  "meta-llama/llama-3.1-8b-instruct:free",
+  "mistralai/pixtral-12b:free"
+];
 
 const buildSystemInstruction = async (currentUser) => {
   try {

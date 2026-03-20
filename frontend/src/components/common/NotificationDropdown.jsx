@@ -52,7 +52,13 @@ export default function NotificationDropdown() {
             });
 
             socketRef.current.on('notification', (data) => {
-                setNotifications(prev => [data, ...prev]);
+                // Map id to _id if needed, and ensure structure match
+                const normalizedNotification = {
+                    ...data,
+                    _id: data.id || data._id,
+                    createdAt: data.createdAt || new Date().toISOString()
+                };
+                setNotifications(prev => [normalizedNotification, ...prev]);
                 setUnreadCount(prev => prev + 1);
                 toast.info(data.title, {
                     description: data.message,
@@ -88,6 +94,20 @@ export default function NotificationDropdown() {
         }
     };
 
+    const markAllAsRead = async () => {
+        try {
+            await axios.put(`${API_BASE_URL}/notifications/mark-all-read`, {}, {
+                headers: getAuthHeader()
+            });
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+            setUnreadCount(0);
+            toast.success('All marked as read');
+        } catch (error) {
+            console.error('Error marking all as read:', error);
+            toast.error('Failed to mark all as read');
+        }
+    };
+
     const getIcon = (type) => {
         switch (type) {
             case 'turn_alert': return <CheckCircle2 className="text-green-500" size={18} />;
@@ -115,9 +135,17 @@ export default function NotificationDropdown() {
                     <div className="p-4 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
                         <h3 className="font-bold text-slate-800">Notifications</h3>
                         {unreadCount > 0 && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-                                {unreadCount} New
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                                    {unreadCount} New
+                                </span>
+                                <button
+                                    onClick={markAllAsRead}
+                                    className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-tight"
+                                >
+                                    Mark All Read
+                                </button>
+                            </div>
                         )}
                     </div>
 
