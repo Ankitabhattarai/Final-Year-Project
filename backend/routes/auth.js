@@ -15,4 +15,13 @@ router.post('/hospital-admin-login', authController.hospitalAdminLogin);
 // Change password
 router.put('/change-password', authenticate, authController.changePassword);
 
+// Forgot password
+router.post('/forgot-password', authController.forgotPassword);
+
+// Reset password
+router.put('/reset-password/:token', authController.resetPassword);
+
+// Google Sign-In
+router.post('/google', authController.googleSignIn);
+
 module.exports = router;

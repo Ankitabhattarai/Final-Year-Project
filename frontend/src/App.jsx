@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { ApiProvider } from "./context/ApiContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Landing from "./pages/Landing/Landing";
@@ -17,6 +17,8 @@ import AdminHospitals from "./pages/AdminDashboard/AdminHospitals";
 import AdminPatients from "./pages/AdminDashboard/AdminPatients";
 import HospitalApply from "./pages/Landing/HospitalApply";
 import ChangePassword from "./pages/auth/ChangePassword";
+import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword/ResetPassword";
 import { Toaster } from 'sonner';
 
 // Protected Route wrapper for authentication and role-based access
@@ -45,6 +47,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 function App() {
   const { logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -54,30 +57,33 @@ function App() {
 
         <Route path="/login" element={
           <Login
-            onNavigateToSignup={() => window.location.href = '/signup'}
-            onNavigateToLanding={() => window.location.href = '/'}
-            onLoginSuccess={(target) => {
-              if (target === 'doctorDashboard') window.location.href = '/doctor-dashboard';
-              else if (target === 'adminDashboard') window.location.href = '/super-admin-dashboard';
-              else window.location.href = '/dashboard';
+            onNavigateToLanding={() => navigate('/')}
+            onLoginSuccess={(userData) => {
+              if (userData.role === 'doctor') navigate('/doctor-dashboard');
+              else if (userData.role === 'admin') navigate('/super-admin-dashboard');
+              else if (userData.role === 'hospital_admin') navigate('/admin-dashboard');
+              else navigate('/dashboard');
             }}
           />
         } />
 
         <Route path="/signup" element={
           <Signup
-            onNavigateToLogin={() => window.location.href = '/login'}
-            onNavigateToLanding={() => window.location.href = '/'}
-            onSignupSuccess={() => window.location.href = '/dashboard'}
+            onNavigateToLogin={() => navigate('/login')}
+            onNavigateToLanding={() => navigate('/')}
+            onSignupSuccess={() => navigate('/dashboard')}
           />
         } />
 
         <Route path="/hospital-admin-login" element={
           <HospitalAdminLogin
-            onNavigateToLanding={() => window.location.href = '/'}
-            onLoginSuccess={() => window.location.href = '/admin-dashboard'}
+            onNavigateToLanding={() => navigate('/')}
+            onLoginSuccess={() => navigate('/admin-dashboard')}
           />
         } />
+
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* Protected Routes */}
         <Route path="/dashboard" element={
