@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { useApi } from "../../context/ApiContext";
+import { useAuth } from "../../context/AuthContext";
+import { GoogleLogin } from '@react-oauth/google';
 import "./Signup.css";
 
 export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignupSuccess }) {
   const { apiFetch } = useApi();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -30,6 +33,33 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      const data = await apiFetch('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+
+      if (data.success) {
+        login(data.user, data.token);
+        setSuccessMessage("Account verified successfully! Redirecting...");
+        setTimeout(() => {
+          onSignupSuccess();
+        }, 1000);
+      } else {
+        setErrors({ general: data.message });
+      }
+    } catch (error) {
+      console.error('Google signup error:', error);
+      setErrors({ general: error.message || 'Verification failed.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -83,9 +113,7 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
           return;
         }
 
-        // Store token in localStorage
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        login(data.user, data.token);
 
         setSuccessMessage("Account created successfully! Redirecting...");
 
@@ -125,6 +153,18 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
         {errors.general && (
           <div className="error-message general-error">{errors.general}</div>
         )}
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setErrors({ general: 'Google Login Failed' })}
+          />
+        </div>
+        
+        <div style={{ textAlign: 'center', margin: '15px 0', color: '#6b7280', fontSize: '14px', position: 'relative' }}>
+          <span style={{ background: 'white', padding: '0 10px', position: 'relative', zIndex: 1 }}>OR SIGN UP WITH EMAIL</span>
+          <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: '#e5e7eb', zIndex: 0 }}></div>
+        </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label className="auth-label">Full Name</label>

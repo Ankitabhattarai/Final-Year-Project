@@ -1,6 +1,11 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const Hospital = require('../models/Hospital');
+const { sendPasswordResetEmail } = require('../utils/emailUtils');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID');
 
 // Generate JWT Token with hospital info
 const generateToken = (userId, role, hospitalId) => {
@@ -259,3 +264,174 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+// Forgot password
+exports.forgotPassword = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'There is no user with that email'
+      });
+    }
+
+    // Get reset token
+    const resetToken = user.getResetPasswordToken();
+
+    await user.save({ validateBeforeSave: false });
+
+    // Create reset url
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+
+    try {
+      await sendPasswordResetEmail(user.email, resetUrl);
+
+      res.status(200).json({
+        success: true,
+        message: 'Email sent'
+      });
+    } catch (err) {
+      console.error('Email sending error: ', err);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+
+      await user.save({ validateBeforeSave: false });
+
+      return res.status(500).json({
+        success: false,
+        message: 'Email could not be sent'
+      });
+    }
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// Reset password
+exports.resetPassword = async (req, res) => {
+  try {
+    // Get hashed token
+    const resetPasswordToken = crypto
+      .createHash('sha256')
+      .update(req.params.token)
+      .digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired token'
+      });
+    }
+
+    // Set new password
+    user.password = req.body.password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    user.mustChangePassword = false;
+
+    await user.save();
+
+    // Generate token for login
+    const token = generateToken(user._id, user.role, user.hospitalId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successful',
+      token,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// Google Sign in / Sign up
+exports.googleSignIn = async (req, res) => {
+  try {
+    const { credential } = req.body;
+    
+    // Verify the Google token
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID',
+    });
+    
+    const payload = ticket.getPayload();
+    const { email, name } = payload;
+    
+    // Check if user already exists
+    let user = await User.findOne({ email }).populate('hospitalId', 'name address');
+    
+    if (!user) {
+      // Create a new user with default password (they can reset it later or keep using Google)
+      const randomPassword = crypto.randomBytes(16).toString('hex');
+      
+      user = new User({
+        fullName: name,
+        email: email,
+        password: randomPassword,
+        role: 'patient',
+        isActive: true
+      });
+      
+      await user.save();
+    } else {
+      // If user exists but was deactivated
+      if (!user.isActive) {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account has been deactivated.'
+        });
+      }
+    }
+    
+    // Generate token
+    const token = generateToken(user._id, user.role, user.hospitalId);
+    
+    res.json({
+      success: true,
+      message: 'Google Sign-in successful',
+      token,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        mustChangePassword: user.mustChangePassword,
+        hospital: user.hospitalId ? {
+          id: user.hospitalId._id,
+          name: user.hospitalId.name,
+          address: user.hospitalId.address
+        } : null
+      }
+    });
+    
+  } catch (error) {
+    console.error('Google Sign-in error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during Google Sign-in'
+    });
+  }
+};
+

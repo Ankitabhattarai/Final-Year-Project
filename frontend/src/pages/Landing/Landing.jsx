@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Landing.css";
 
 const barHeights = [40, 65, 50, 80, 60, 90, 70, 85, 55, 75];
@@ -7,6 +8,7 @@ export default function Landing({ onNavigateToLogin, onNavigateToSignup }) {
   const [scrolled, setScrolled] = useState(false);
   const [barsVisible, setBarsVisible] = useState(false);
   const observerRefs = useRef([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 30);
@@ -34,7 +36,7 @@ export default function Landing({ onNavigateToLogin, onNavigateToSignup }) {
           <span className="logo-name">Care<span>line</span></span>
         </div>
         <nav className="nav">
-          <button className="nav-link" onClick={() => window.location.href = "/join"}>For Hospitals</button>
+          <button className="nav-link" onClick={() => navigate('/join')}>For Hospitals</button>
           <button className="nav-link">About</button>
           <button className="nav-btn-outline" onClick={onNavigateToLogin}>Log in</button>
           <button className="nav-btn-filled" onClick={onNavigateToSignup}>Get Started</button>
@@ -196,7 +198,7 @@ export default function Landing({ onNavigateToLogin, onNavigateToSignup }) {
             <button className="btn-hero-primary" style={{ fontSize: "16px", padding: "16px 36px" }} onClick={onNavigateToSignup}>
               Start Free Trial →
             </button>
-            <button className="btn-hero-ghost" style={{ fontSize: "16px", padding: "16px 28px" }} onClick={() => window.location.href = "/join"}>
+            <button className="btn-hero-ghost" style={{ fontSize: "16px", padding: "16px 28px" }} onClick={() => navigate('/join')}>
               Join as Hospital
             </button>
           </div>

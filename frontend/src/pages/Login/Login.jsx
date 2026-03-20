@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useApi } from "../../context/ApiContext";
 import { useAuth } from "../../context/AuthContext";
+import { GoogleLogin } from '@react-oauth/google';
 import { toast } from 'sonner';
 import "./Login.css";
 
@@ -30,6 +32,31 @@ export default function Login({ onNavigateToSignup, onNavigateToLanding, onLogin
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      const data = await apiFetch('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+
+      if (data.success) {
+        login(data.user, data.token);
+        setSuccessMessage(`Welcome, ${data.user.fullName}! Redirecting...`);
+        onLoginSuccess(data.user);
+      } else {
+        setErrors({ general: data.message });
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      setErrors({ general: error.message || 'Verification failed.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -65,16 +92,7 @@ export default function Login({ onNavigateToSignup, onNavigateToLanding, onLogin
 
         setSuccessMessage(`Welcome back, ${data.user.fullName}! Redirecting...`);
 
-        // Redirect based on role
-        setTimeout(() => {
-          if (data.user.role === 'doctor') {
-            onLoginSuccess('doctorDashboard');
-          } else if (data.user.role === 'admin' || data.user.role === 'hospital_admin') {
-            onLoginSuccess('adminDashboard');
-          } else {
-            onLoginSuccess('dashboard');
-          }
-        }, 1000);
+        onLoginSuccess(data.user);
       } else {
         setErrors({ general: data.message });
       }
@@ -113,6 +131,19 @@ export default function Login({ onNavigateToSignup, onNavigateToLanding, onLogin
           <div className="error-message general-error">{errors.general}</div>
         )}
 
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setErrors({ general: 'Google Login Failed' })}
+            useOneTap={false}
+          />
+        </div>
+        
+        <div style={{ textAlign: 'center', margin: '15px 0', color: '#6b7280', fontSize: '14px', position: 'relative' }}>
+          <span style={{ background: 'white', padding: '0 10px', position: 'relative', zIndex: 1 }}>OR SIGN IN WITH EMAIL</span>
+          <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: '#e5e7eb', zIndex: 0 }}></div>
+        </div>
+
         <form className="auth-form" onSubmit={handleSubmit}>
           <label className="auth-label">Email</label>
           <input
@@ -139,9 +170,9 @@ export default function Login({ onNavigateToSignup, onNavigateToLanding, onLogin
           {errors.password && <span className="error-message">{errors.password}</span>}
 
           <div className="forgot-password">
-            <button type="button" onClick={() => toast.info("Forgot password feature coming soon!")}>
+            <Link to="/forgot-password" style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', textDecoration: 'none', fontSize: '14px' }}>
               Forgot Password?
-            </button>
+            </Link>
           </div>
 
           <button type="submit" className="auth-btn" disabled={isLoading}>

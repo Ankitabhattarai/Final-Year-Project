@@ -104,7 +104,45 @@ const sendHospitalStatusEmail = async (adminEmail, hospitalName, status, tempPas
   }
 };
 
+/**
+ * Sends a password reset email to a user.
+ * @param {string} email - The recipient's email.
+ * @param {string} resetUrl - The password reset URL.
+ */
+const sendPasswordResetEmail = async (email, resetUrl) => {
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.warn('Email credentials not configured. Skipping email.');
+      return;
+    }
+
+    const mailOptions = {
+      from: `"Careline Support" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Password Reset Request',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-top: 5px solid #2563eb;">
+          <h2 style="color: #2563eb; text-align: center;">Careline</h2>
+          <p>You requested a password reset. Please click the button below to reset your password. This link is valid for 10 minutes.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+          </div>
+          <p>If you did not request this, please ignore this email.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="font-size: 12px; color: #9ca3af; text-align: center;">Careline - Revolutionizing Hospital Efficiency</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Password reset email sent to ${email}`);
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+  }
+};
+
 module.exports = {
   sendTurnNotificationEmail,
-  sendHospitalStatusEmail
+  sendHospitalStatusEmail,
+  sendPasswordResetEmail
 };
