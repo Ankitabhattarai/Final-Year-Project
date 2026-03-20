@@ -107,7 +107,7 @@ export default function PatientDashboard() {
       if (fetchedDoctors.length > 0) {
         const leastBusyDoctor = [...fetchedDoctors].sort((a, b) => (a.queueCount || 0) - (b.queueCount || 0))[0];
         setSelectedDoctor(leastBusyDoctor._id);
-        toast.info(`Auto-selected Dr. ${leastBusyDoctor.fullName} (least busy)`);
+        toast.info(`Auto-selected ${leastBusyDoctor.fullName} (least busy)`);
       }
     } catch (error) {
       console.error('Error fetching doctors:', error);
@@ -164,7 +164,7 @@ export default function PatientDashboard() {
       setMyQueue(qResp.data || []);
       setQuickSuggestions(sResp.data || []);
 
-      toast.success(`Successfully booked with Dr. ${suggestion.doctor_name || suggestion.option?.doctor_name}`);
+      toast.success(`Successfully booked with ${suggestion.doctor_name || suggestion.option?.doctor_name}`);
     } catch (error) {
       console.error('Quick book error:', error);
       toast.error(error.response?.data?.message || 'Error booking quick token');
@@ -318,7 +318,7 @@ export default function PatientDashboard() {
                       <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-4 group-hover:scale-110 transition-transform">
                         <User size={24} />
                       </div>
-                      <h3 className="text-lg font-bold text-slate-900 line-clamp-1">Dr. {doc.doctor_name}</h3>
+                      <h3 className="text-lg font-bold text-slate-900 line-clamp-1">{doc.doctor_name}</h3>
                       <p className="text-sm font-semibold text-indigo-600">{doc.department}</p>
                     </div>
 
@@ -348,16 +348,16 @@ export default function PatientDashboard() {
             </div>
           </div>
         )}
-        
+
         {/* AI Recommended Slots */}
-        {selectedDept && selectedHospital && (
+        {/* {selectedDept && selectedHospital && (
           <div className="mb-12">
             <AIRecommendations
               department={departments.find(d => d._id === selectedDept)?.name}
               hospitalId={selectedHospital}
             />
           </div>
-        )}
+        )} */}
 
         {/* My Bookings */}
         <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm mb-12">
