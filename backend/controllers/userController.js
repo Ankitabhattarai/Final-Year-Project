@@ -210,7 +210,19 @@ exports.updateUser = async (req, res) => {
     if (fullName) user.fullName = fullName;
     if (email) user.email = email;
     if (role && ['doctor', 'staff'].includes(role)) user.role = role;
-    if (profile) user.profile = { ...user.profile, ...profile };
+    if (profile) {
+      if (!user.profile) user.profile = {};
+      if (profile.phone !== undefined) user.profile.phone = profile.phone;
+      if (profile.dateOfBirth !== undefined) user.profile.dateOfBirth = profile.dateOfBirth;
+      if (profile.gender !== undefined) user.profile.gender = profile.gender;
+      if (profile.address) {
+        if (!user.profile.address) user.profile.address = {};
+        if (profile.address.street !== undefined) user.profile.address.street = profile.address.street;
+        if (profile.address.city !== undefined) user.profile.address.city = profile.address.city;
+        if (profile.address.state !== undefined) user.profile.address.state = profile.address.state;
+        if (profile.address.zipCode !== undefined) user.profile.address.zipCode = profile.address.zipCode;
+      }
+    }
     if (employeeDetails) {
       user.employeeDetails = { ...user.employeeDetails, ...employeeDetails };
     }

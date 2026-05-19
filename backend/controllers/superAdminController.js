@@ -53,6 +53,11 @@ exports.processHospitalRequest = async (req, res) => {
                     mustChangePassword: true
                 });
                 await adminUser.save();
+            } else {
+                // Link the existing user to the hospital and set their role to admin
+                adminUser.role = 'hospital_admin';
+                adminUser.hospitalId = hospital._id;
+                await adminUser.save();
             }
         } else {
             hospital.isActive = false;

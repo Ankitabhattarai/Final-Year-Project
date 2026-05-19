@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import NotificationDropdown from '../common/NotificationDropdown';
 
+import PageWrapper from './PageWrapper';
+
 const patientNav = [
     { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
     { label: 'Settings', path: '/settings', icon: <Settings size={20} /> },
@@ -154,9 +156,9 @@ export default function DashboardLayout({ children }) {
                 </header>
 
                 {/* Page Content */}
-                <div className="p-8">
+                <PageWrapper className="py-8">
                     {children}
-                </div>
+                </PageWrapper>
             </main>
         </div>
     );

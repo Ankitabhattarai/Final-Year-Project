@@ -240,7 +240,7 @@ export default function AdminUsersPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Hospital Administration</h1>
           <p className="text-gray-600 mt-1">Manage your hospital's departments, doctors, and staff members.</p>
@@ -293,7 +293,7 @@ export default function AdminUsersPage() {
           <>
             {/* ── My Hospital Profile ── */}
             {activeTab === 'hospital' && (
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <div className="p-6">
                   {hospitalList.map((h) => (
                     <div key={h._id} className="space-y-6">
@@ -345,7 +345,7 @@ export default function AdminUsersPage() {
 
             {/* ── Departments Table ── */}
             {activeTab === 'departments' && (
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -384,7 +384,7 @@ export default function AdminUsersPage() {
 
             {/* ── Doctors Table ── */}
             {activeTab === 'doctors' && (
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -426,7 +426,7 @@ export default function AdminUsersPage() {
 
             {/* ── Users Table ── */}
             {activeTab === 'users' && (
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>

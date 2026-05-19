@@ -33,7 +33,7 @@ const AIRecommendations = ({ department, hospitalId }) => {
     if (!department || !hospitalId) return null;
 
     return (
-        <div className="bg-white/80 backdrop-blur-md border border-indigo-100 rounded-2xl p-6 shadow-xl shadow-indigo-50/50 transition-all hover:shadow-indigo-100/50">
+        <div className="bg-white/80 backdrop-blur-md border border-indigo-100 rounded-xl p-6 shadow-xl shadow-indigo-50/50 transition-all hover:shadow-indigo-100/50">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-indigo-50 rounded-lg">

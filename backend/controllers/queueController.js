@@ -41,12 +41,15 @@ exports.getQueueList = async (req, res) => {
       endDate.setHours(23, 59, 59, 999);
       query.scheduledTime = { $gte: startDate, $lte: endDate };
     } else {
-      // Default to today
+      // Default to today or any active patient
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      query.scheduledTime = { $gte: today, $lt: tomorrow };
+      query.$or = [
+        { status: { $in: ['waiting', 'in_progress'] } },
+        { scheduledTime: { $gte: today, $lt: tomorrow } }
+      ];
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);

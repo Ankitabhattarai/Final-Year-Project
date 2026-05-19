@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate, requireHospitalAdmin } = require('../middleware/auth');
+const { authenticate, requireHospitalAdmin, requireHospitalAccess } = require('../middleware/auth');
 const adminUserController = require('../controllers/adminUserController');
 const adminHospitalController = require('../controllers/adminHospitalController');
 
-// All routes require authentication and hospital admin role
+// All routes require authentication, hospital admin role, and active hospital access
 router.use(authenticate);
 router.use(requireHospitalAdmin);
+router.use(requireHospitalAccess);
 
 // *** USERS ***
 router.get('/users', adminUserController.getAllUsers);

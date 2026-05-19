@@ -20,8 +20,16 @@ exports.getMyQueue = async (req, res) => {
 
     const queueEntries = await Queue.find({
       doctorId,
-      scheduledTime: { $gte: today, $lt: tomorrow },
-      status: { $nin: ['cancelled'] }
+      $or: [
+        { status: { $in: ['waiting', 'in_progress'] } },
+        {
+          status: { $in: ['completed', 'no_show'] },
+          $or: [
+            { scheduledTime: { $gte: today, $lt: tomorrow } },
+            { completedTime: { $gte: today, $lt: tomorrow } }
+          ]
+        }
+      ]
     })
     .populate('patientId', 'fullName phone patientId')
     .sort({ scheduledTime: 1, priority: -1 });
@@ -99,8 +107,7 @@ exports.updatePatientStatus = async (req, res) => {
 
         const nextPatient = await Queue.findOne({
           doctorId,
-          status: 'waiting',
-          scheduledTime: { $gte: todayStart }
+          status: 'waiting'
         }).sort({ scheduledTime: 1, priority: -1 })
           .populate('patientId', 'fullName email')
           .populate('hospitalId', 'name');
@@ -184,8 +191,16 @@ exports.getDoctorStats = async (req, res) => {
       {
         $match: {
           doctorId: new mongoose.Types.ObjectId(doctorId),
-          scheduledTime: { $gte: today, $lt: tomorrow },
-          status: { $ne: 'cancelled' }
+          $or: [
+            { status: { $in: ['waiting', 'in_progress'] } },
+            {
+              status: { $in: ['completed', 'no_show'] },
+              $or: [
+                { scheduledTime: { $gte: today, $lt: tomorrow } },
+                { completedTime: { $gte: today, $lt: tomorrow } }
+              ]
+            }
+          ]
         }
       },
       {

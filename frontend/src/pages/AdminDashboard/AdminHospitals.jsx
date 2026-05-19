@@ -67,7 +67,7 @@ export default function AdminHospitals() {
 
     return (
         <DashboardLayout>
-            <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="space-y-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Manage Hospitals</h1>
@@ -78,7 +78,7 @@ export default function AdminHospitals() {
                         <input
                             type="text"
                             placeholder="Search by hospital name..."
-                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 transition-all outline-none text-slate-700 font-medium"
+                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 transition-all outline-none text-slate-700 font-medium"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -90,7 +90,7 @@ export default function AdminHospitals() {
                         <div
                             key={hospital._id}
                             onClick={() => setSelectedHospital(hospital)}
-                            className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all group overflow-hidden flex flex-col cursor-pointer"
+                            className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-xl transition-all group overflow-hidden flex flex-col cursor-pointer"
                         >
                             <div className="p-8 pb-0">
                                 <div className="flex items-start justify-between mb-6">

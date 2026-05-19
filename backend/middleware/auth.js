@@ -68,7 +68,7 @@ const requireHospitalAccess = (req, res, next) => {
   }
   
   // Add hospitalId to request for easy access in routes
-  req.hospitalId = req.user.hospitalId._id;
+  req.hospitalId = req.user.hospitalId._id || req.user.hospitalId;
   next();
 };
 

@@ -52,11 +52,11 @@ const seedData = async () => {
         const cities = ['Kathmandu', 'Lalitpur', 'Bhaktapur', 'Pokhara', 'Bharatpur', 'Biratnagar'];
         const hospitalNames = ['Bir Hospital', 'Patan Hospital', 'Civil Hospital', 'Teaching Hospital', 'Norvic Hospital', 'Medicity Hospital'];
         const deptsTemplate = [
-            { name: 'General Medicine', description: 'General health' },
-            { name: 'Cardiology', description: 'Heart care' },
-            { name: 'Pediatrics', description: 'Child care' },
-            { name: 'Orthopedics', description: 'Bone care' },
-            { name: 'Neurology', description: 'Brain care' }
+            { name: 'General Medicine', code: 'GEN', description: 'General health' },
+            { name: 'Cardiology', code: 'CAR', description: 'Heart care' },
+            { name: 'Pediatrics', code: 'PED', description: 'Child care' },
+            { name: 'Orthopedics', code: 'ORT', description: 'Bone care' },
+            { name: 'Neurology', code: 'NEU', description: 'Brain care' }
         ];
 
         for (let i = 0; i < 6; i++) {

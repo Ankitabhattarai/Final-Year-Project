@@ -102,6 +102,7 @@ exports.getAvailableDoctors = async (req, res) => {
       hospitalId: req.params.hospitalId,
       role: 'doctor',
       'employeeDetails.department': req.params.deptName,
+      'employeeDetails.isActive': true,
       isActive: true
     }).select('fullName employeeDetails.specialization employeeDetails.experience');
 

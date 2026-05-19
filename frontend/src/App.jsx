@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { ApiProvider } from "./context/ApiContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Landing from "./pages/Landing/Landing";
+import About from "./pages/About/About";
 import Login from "./pages/Login/Login";
 import Signup from "./pages/Signup/Signup";
 import PatientDashboard from "./pages/PatientDashboard/PatientDashboard";
@@ -53,10 +54,12 @@ function App() {
     <>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Landing onNavigateToLogin={() => window.location.href = '/login'} onNavigateToSignup={() => window.location.href = '/signup'} />} />
+        <Route path="/" element={<Landing onNavigateToLogin={() => navigate('/login')} onNavigateToSignup={() => navigate('/signup')} />} />
+        <Route path="/about" element={<About />} />
 
         <Route path="/login" element={
           <Login
+            onNavigateToSignup={() => navigate('/signup')}
             onNavigateToLanding={() => navigate('/')}
             onLoginSuccess={(userData) => {
               if (userData.role === 'doctor') navigate('/doctor-dashboard');

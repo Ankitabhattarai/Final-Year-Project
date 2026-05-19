@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Ticket, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Ticket, Clock, CheckCircle, XCircle, Loader2, UserPlus, X } from 'lucide-react';
 import adminService from '@/services/adminService';
 import queueService from '@/services/queueService';
 import patientService from '@/services/patientService';
@@ -34,6 +34,17 @@ export default function TokenGen() {
     const [selectedDoctor, setSelectedDoctor] = useState('');
     const [selectedPatientId, setSelectedPatientId] = useState('');
     const [searchPatient, setSearchPatient] = useState('');
+
+    // Add Walk-In Patient Modal states
+    const [showAddPatientModal, setShowAddPatientModal] = useState(false);
+    const [creatingPatient, setCreatingPatient] = useState(false);
+    const [newPatientForm, setNewPatientForm] = useState({
+        fullName: '',
+        phone: '',
+        email: '',
+        gender: 'male',
+        dateOfBirth: ''
+    });
 
     useEffect(() => {
         fetchInitialData();
@@ -109,8 +120,8 @@ export default function TokenGen() {
         }
     };
 
-    const handleIssueToken = async () => {
-        if (!selectedDept || !selectedDoctor || !selectedPatientId) {
+    const issueTokenForPatient = async (patientId) => {
+        if (!selectedDept || !selectedDoctor || !patientId) {
             toast.error('Please select department, doctor and patient');
             return;
         }
@@ -118,7 +129,7 @@ export default function TokenGen() {
         try {
             setSubmitting(true);
             const payload = {
-                patientId: selectedPatientId,
+                patientId: patientId,
                 doctorId: selectedDoctor,
                 department: selectedDept,
                 scheduledTime: new Date().toISOString(),
@@ -154,6 +165,47 @@ export default function TokenGen() {
         }
     };
 
+    const handleIssueToken = async () => {
+        await issueTokenForPatient(selectedPatientId);
+    };
+
+    const handleCreatePatient = async (e) => {
+        e.preventDefault();
+        try {
+            setCreatingPatient(true);
+            const response = await patientService.createPatient(newPatientForm);
+            if (response.success) {
+                const newPatient = response.data;
+                // Add the new patient to the local list
+                setPatients(prev => [newPatient, ...prev]);
+                // Select the new patient in the dropdown
+                setSelectedPatientId(newPatient._id);
+                
+                // Reset form and close modal
+                setNewPatientForm({
+                    fullName: '',
+                    phone: '',
+                    email: '',
+                    gender: 'male',
+                    dateOfBirth: ''
+                });
+                setShowAddPatientModal(false);
+                toast.success('Walk-in patient registered successfully!');
+
+                // Single fluid motion: if doctor & department are already selected, issue the token!
+                if (selectedDept && selectedDoctor) {
+                    toast.info('Issuing token for the new patient...');
+                    await issueTokenForPatient(newPatient._id);
+                }
+            }
+        } catch (error) {
+            console.error('Error creating patient:', error);
+            toast.error(error.response?.data?.message || 'Error creating patient');
+        } finally {
+            setCreatingPatient(false);
+        }
+    };
+
     if (loading) {
         return (
             <DashboardLayout>
@@ -166,7 +218,7 @@ export default function TokenGen() {
 
     return (
         <DashboardLayout>
-            <div className="flex flex-col gap-8">
+            <div className="space-y-8">
                 <div>
                     <h1 className="text-3xl font-bold text-foreground">
                         Token Kiosk & Queue Management
@@ -178,7 +230,7 @@ export default function TokenGen() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Issue Token */}
-                    <div className="p-6 rounded-lg border border-border bg-white shadow-sm">
+                    <div className="p-6 rounded-xl border border-border bg-white shadow-sm">
                         <h2 className="text-xl font-semibold mb-2">
                             Issue New Token
                         </h2>
@@ -216,7 +268,17 @@ export default function TokenGen() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-1.5 gray-700">Patient</label>
+                                <div className="flex justify-between items-center mb-1.5">
+                                    <label className="block text-sm font-medium text-gray-700">Patient</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddPatientModal(true)}
+                                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+                                    >
+                                        <UserPlus size={14} />
+                                        Add Walk-In
+                                    </button>
+                                </div>
                                 <select
                                     className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-primary/20 outline-none"
                                     value={selectedPatientId}
@@ -230,7 +292,7 @@ export default function TokenGen() {
                             </div>
 
                             <button
-                                className="w-full mt-2 px-4 py-2.5 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 flex justify-center items-center gap-2"
+                                className="w-full mt-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 flex justify-center items-center gap-2"
                                 onClick={handleIssueToken}
                                 disabled={!selectedDept || !selectedDoctor || !selectedPatientId || submitting}
                             >
@@ -241,7 +303,7 @@ export default function TokenGen() {
                     </div>
 
                     {/* Live Queue */}
-                    <div className="p-6 rounded-lg border border-border bg-white shadow-sm lg:col-span-2">
+                    <div className="p-6 rounded-xl border border-border bg-white shadow-sm lg:col-span-2">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">Live Queue Overview</h2>
                             <button
@@ -302,7 +364,7 @@ export default function TokenGen() {
                                     <button
                                         onClick={() => handlePageChange(currentPage - 1)}
                                         disabled={currentPage === 1}
-                                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
                                         Previous
                                     </button>
@@ -311,7 +373,7 @@ export default function TokenGen() {
                                             <button
                                                 key={idx + 1}
                                                 onClick={() => handlePageChange(idx + 1)}
-                                                className={`w-10 h-10 text-sm font-medium rounded-lg transition-colors ${currentPage === idx + 1
+                                                className={`w-10 h-10 text-sm font-medium rounded-xl transition-colors ${currentPage === idx + 1
                                                     ? 'bg-blue-600 text-white'
                                                     : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
                                                     }`}
@@ -323,7 +385,7 @@ export default function TokenGen() {
                                     <button
                                         onClick={() => handlePageChange(currentPage + 1)}
                                         disabled={currentPage === queuePagination.pages}
-                                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
                                         Next
                                     </button>
@@ -335,7 +397,7 @@ export default function TokenGen() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Quick Reference */}
-                    <div className="p-6 rounded-lg border border-border bg-white shadow-sm">
+                    <div className="p-6 rounded-xl border border-border bg-white shadow-sm">
                         <h2 className="text-xl font-semibold mb-4">
                             Operational Guidelines
                         </h2>
@@ -346,7 +408,7 @@ export default function TokenGen() {
                                 { title: 'Queue Reset', desc: 'Tokens are automatically reset daily at 00:00.' },
                                 { title: 'Support', desc: 'Contact technical team for system sync issues.' }
                             ].map((item, idx) => (
-                                <div key={idx} className="flex gap-4 p-3 rounded-lg bg-gray-50 border border-gray-100">
+                                <div key={idx} className="flex gap-4 p-3 rounded-xl bg-gray-50 border border-gray-100">
                                     <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold">{idx + 1}</div>
                                     <div>
                                         <p className="font-semibold text-sm">{item.title}</p>
@@ -358,7 +420,7 @@ export default function TokenGen() {
                     </div>
 
                     {/* Daily Summary */}
-                    <div className="p-6 rounded-lg border border-border bg-white shadow-sm">
+                    <div className="p-6 rounded-xl border border-border bg-white shadow-sm">
                         <h2 className="text-xl font-semibold mb-2">
                             Today's Metrics
                         </h2>
@@ -393,6 +455,112 @@ export default function TokenGen() {
                     </div>
                 </div>
             </div>
+            {showAddPatientModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-xl max-w-md w-full p-6 mx-4 relative animate-in fade-in zoom-in-95 duration-200">
+                        <button 
+                            onClick={() => setShowAddPatientModal(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                        
+                        <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+                            <UserPlus className="text-blue-600" size={22} />
+                            Register Walk-In Patient
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-6">Enter basic details to quickly register a new walk-in patient.</p>
+                        
+                        <form onSubmit={handleCreatePatient} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Full Name *</label>
+                                <input 
+                                    type="text"
+                                    required
+                                    className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-blue-600/20 outline-none"
+                                    placeholder="e.g. John Doe"
+                                    value={newPatientForm.fullName}
+                                    onChange={(e) => setNewPatientForm({ ...newPatientForm, fullName: e.target.value })}
+                                />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Phone Number *</label>
+                                    <input 
+                                        type="tel"
+                                        required
+                                        className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-blue-600/20 outline-none"
+                                        placeholder="e.g. 9841xxxxxx"
+                                        value={newPatientForm.phone}
+                                        onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Gender *</label>
+                                    <select
+                                        required
+                                        className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-600/20 outline-none"
+                                        value={newPatientForm.gender}
+                                        onChange={(e) => setNewPatientForm({ ...newPatientForm, gender: e.target.value })}
+                                    >
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Email (Optional)</label>
+                                <input 
+                                    type="email"
+                                    className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-blue-600/20 outline-none"
+                                    placeholder="e.g. john@example.com"
+                                    value={newPatientForm.email}
+                                    onChange={(e) => setNewPatientForm({ ...newPatientForm, email: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Date of Birth *</label>
+                                <input 
+                                    type="date"
+                                    required
+                                    className="w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-blue-600/20 outline-none"
+                                    value={newPatientForm.dateOfBirth}
+                                    onChange={(e) => setNewPatientForm({ ...newPatientForm, dateOfBirth: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="flex gap-3 justify-end pt-4 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddPatientModal(false)}
+                                    className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                                    disabled={creatingPatient}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+                                    disabled={creatingPatient}
+                                >
+                                    {creatingPatient ? (
+                                        <>
+                                            <Loader2 className="animate-spin" size={16} />
+                                            Creating...
+                                        </>
+                                    ) : (
+                                        'Register & Select'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </DashboardLayout>
     );
 }

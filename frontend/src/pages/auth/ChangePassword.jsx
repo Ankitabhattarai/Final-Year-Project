@@ -56,7 +56,7 @@ export default function ChangePassword() {
     if (success) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-                <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-12 text-center border border-slate-100">
+                <div className="max-w-md w-full bg-white rounded-xl shadow-xl p-12 text-center border border-slate-100">
                     <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg shadow-emerald-50">
                         <CheckCircle2 size={40} />
                     </div>
@@ -76,7 +76,7 @@ export default function ChangePassword() {
         <div className="min-h-screen bg-slate-50 py-20 px-6 flex items-center justify-center">
             <div className="max-w-md w-full">
                 <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl mb-6 shadow-xl shadow-amber-50">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 text-amber-600 rounded-xl mb-6 shadow-xl shadow-amber-50">
                         <ShieldAlert size={32} />
                     </div>
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Security Update</h1>
@@ -85,7 +85,7 @@ export default function ChangePassword() {
                     </p>
                 </div>
 
-                <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+                <div className="bg-white rounded-xl shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
                     <form onSubmit={handleSubmit} className="p-8 md:p-10 space-y-6">
                         <div className="space-y-1">
                             <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Current Password</label>
@@ -98,7 +98,7 @@ export default function ChangePassword() {
                                     placeholder="Enter temporary password"
                                     value={formData.currentPassword}
                                     onChange={handleChange}
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all outline-none font-medium"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all outline-none font-medium"
                                 />
                             </div>
                         </div>
@@ -114,7 +114,7 @@ export default function ChangePassword() {
                                     placeholder="Min. 6 characters"
                                     value={formData.newPassword}
                                     onChange={handleChange}
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all outline-none font-medium"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all outline-none font-medium"
                                 />
                             </div>
                         </div>
@@ -130,7 +130,7 @@ export default function ChangePassword() {
                                     placeholder="Re-enter new password"
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all outline-none font-medium"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all outline-none font-medium"
                                 />
                             </div>
                         </div>
@@ -138,7 +138,7 @@ export default function ChangePassword() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-black py-4 px-8 rounded-2xl text-lg flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-100 group mt-4"
+                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-black py-4 px-8 rounded-xl text-lg flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-100 group mt-4"
                         >
                             {loading ? (
                                 <Loader2 className="animate-spin" />

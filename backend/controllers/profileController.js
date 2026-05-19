@@ -27,7 +27,8 @@ exports.updateProfile = async (req, res) => {
     if (fullName) user.fullName = fullName;
     if (email) user.email = email;
     if (phone) {
-        user.profile = { ...user.profile, phone };
+        if (!user.profile) user.profile = {};
+        user.profile.phone = phone;
     }
 
     await user.save();

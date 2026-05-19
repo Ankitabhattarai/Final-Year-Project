@@ -43,8 +43,11 @@ const patientDashboardService = {
         });
         return response.data;
     },
-    getQuickSuggestion: async () => {
-        const response = await axios.get(`${API_BASE_URL}/ai/quick-suggestion`, {
+    getQuickSuggestion: async (hospitalId) => {
+        const url = hospitalId 
+            ? `${API_BASE_URL}/ai/quick-suggestion?hospitalId=${hospitalId}`
+            : `${API_BASE_URL}/ai/quick-suggestion`;
+        const response = await axios.get(url, {
             headers: getAuthHeader()
         });
         return response.data;

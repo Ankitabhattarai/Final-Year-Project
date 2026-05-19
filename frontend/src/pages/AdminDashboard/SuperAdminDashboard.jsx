@@ -66,7 +66,7 @@ export default function SuperAdminDashboard() {
 
     return (
         <DashboardLayout>
-            <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="space-y-8">
                 <div className="mb-8">
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">System Administration</h1>
                     <p className="text-slate-500 mt-2 font-medium italic">Global monitoring and platform management</p>
@@ -100,10 +100,10 @@ export default function SuperAdminDashboard() {
                     />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Pending Requests */}
                     <div className="lg:col-span-2">
-                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                                 <h2 className="text-xl font-bold text-slate-800">Hospital Onboarding Requests</h2>
                                 <span className="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
@@ -144,7 +144,7 @@ export default function SuperAdminDashboard() {
                                                             <>
                                                                 <CheckCircle size={16} />
                                                                 Approve
-                                                            </>
+                                                                </>
                                                         )}
                                                     </button>
                                                     <button
@@ -174,7 +174,7 @@ export default function SuperAdminDashboard() {
 
                     {/* Quick Info / Links */}
                     <div className="space-y-6">
-                        <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl shadow-slate-200">
+                        <div className="bg-slate-900 rounded-xl p-6 text-white shadow-xl shadow-slate-200">
                             <h2 className="text-xl font-bold mb-4">Quick Insights</h2>
                             <div className="space-y-4">
                                 <div className="p-4 bg-slate-800 rounded-xl border border-slate-700">
@@ -188,7 +188,7 @@ export default function SuperAdminDashboard() {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
                             <h2 className="text-xl font-bold text-slate-800 mb-4">Management</h2>
                             <div className="space-y-3">
                                 <ManagementLink to="/admin/system/hospitals" label="Manage All Hospitals" icon={<Building2 size={18} />} />
@@ -211,9 +211,9 @@ export default function SuperAdminDashboard() {
 
 function StatCard({ label, value, icon, bgColor }) {
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg transition-all transform hover:-translate-y-1">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg transition-all transform hover:-translate-y-1">
             <div className="flex items-center gap-4">
-                <div className={`p-4 rounded-2xl ${bgColor}`}>
+                <div className={`p-4 rounded-xl ${bgColor}`}>
                     {icon}
                 </div>
                 <div>

@@ -2,9 +2,9 @@ const Hospital = require("../models/Hospital");
 const User = require("../models/User");
 
 const FREE_MODELS = [
-  "liquid/lfm-2.5-1.2b-instruct:free",
-  "meta-llama/llama-3.1-8b-instruct:free",
-  "mistralai/pixtral-12b:free"
+  "llama-3.1-8b-instant",
+  "mixtral-8x7b-32768",
+  "gemma2-9b-it"
 ];
 
 const buildSystemInstruction = async (currentUser) => {
@@ -81,31 +81,15 @@ const callWithFallback = async (messages) => {
     try {
       console.log(`🤖 Trying model: ${model}`);
 
-      // Gemma models don't support system role — merge into first user message
-      let formattedMessages = messages;
-      if (model.includes("gemma")) {
-        const systemMsg = messages.find(m => m.role === "system");
-        const otherMsgs = messages.filter(m => m.role !== "system");
-        if (systemMsg && otherMsgs[0]) {
-          otherMsgs[0] = {
-            ...otherMsgs[0],
-            content: `${systemMsg.content}\n\n${otherMsgs[0].content}`
-          };
-        }
-        formattedMessages = otherMsgs;
-      }
-
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:5000",
-          "X-Title": "Careline Hospital System",
         },
         body: JSON.stringify({
           model,
-          messages: formattedMessages,
+          messages,
           max_tokens: 512,
           temperature: 0.7,
         }),
@@ -118,7 +102,7 @@ const callWithFallback = async (messages) => {
         return data.choices[0].message.content;
       }
 
-      const reason = data.error?.metadata?.raw || data.error?.message || `HTTP ${response.status}`;
+      const reason = data.error?.message || `HTTP ${response.status}`;
       console.warn(`⚠️ Model ${model} failed: ${reason}`);
       errors.push(`${model}: ${reason}`);
 
@@ -145,11 +129,11 @@ exports.getChatResponse = async (req, res) => {
     }
 
     // Check API key
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!process.env.GROQ_API_KEY) {
       return res.status(500).json({
         success: false,
         message:
-          "OpenRouter API Key is missing. Please add OPENROUTER_API_KEY to your .env file.",
+          "AI API Key is missing. Please add GROQ_API_KEY to your .env file.",
       });
     }
 

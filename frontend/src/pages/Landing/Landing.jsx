@@ -37,7 +37,7 @@ export default function Landing({ onNavigateToLogin, onNavigateToSignup }) {
         </div>
         <nav className="nav">
           <button className="nav-link" onClick={() => navigate('/join')}>For Hospitals</button>
-          <button className="nav-link">About</button>
+          <button className="nav-link" onClick={() => navigate('/about')}>About</button>
           <button className="nav-btn-outline" onClick={onNavigateToLogin}>Log in</button>
           <button className="nav-btn-filled" onClick={onNavigateToSignup}>Get Started</button>
         </nav>
@@ -49,9 +49,7 @@ export default function Landing({ onNavigateToLogin, onNavigateToSignup }) {
         <div className="hero-orb-2" />
         <div className="hero-inner">
           <div className="hero-left">
-            <div className="hero-eyebrow">
-              <span className="eyebrow-dot" /> AI-Powered Healthcare Platform
-            </div>
+
             <h1 className="hero-headline">
               The smarter way to<br />
               <em>manage patient flow</em>
@@ -90,9 +88,7 @@ export default function Landing({ onNavigateToLogin, onNavigateToSignup }) {
               alt="Modern Hospital Building"
               className="hero-hospital-img"
             />
-            <div className="float-badge-2">
-              <div className="status-dot-live" /> Live · 3 hospitals synced
-            </div>
+
           </div>
         </div>
       </section>
@@ -228,7 +224,21 @@ export default function Landing({ onNavigateToLogin, onNavigateToSignup }) {
             <div key={col.title}>
               <div className="footer-col-title">{col.title}</div>
               <div className="footer-links">
-                {col.links.map((l) => <a href="#" className="footer-link" key={l}>{l}</a>)}
+                {col.links.map((l) => (
+                  <a
+                    href="#"
+                    className="footer-link"
+                    key={l}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (l === "About Us") {
+                        navigate('/about');
+                      }
+                    }}
+                  >
+                    {l}
+                  </a>
+                ))}
               </div>
             </div>
           ))}

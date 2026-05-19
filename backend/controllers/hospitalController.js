@@ -58,6 +58,7 @@ exports.updateHospitalProfile = async (req, res) => {
     if (departments && Array.isArray(departments)) {
       updateData.departments = departments.map(dept => ({
         name: dept.name,
+        code: dept.code || '',
         description: dept.description || '',
         isActive: dept.isActive !== undefined ? dept.isActive : true
       }));
@@ -131,7 +132,7 @@ exports.getDepartments = async (req, res) => {
 // Add new department
 exports.addDepartment = async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, code } = req.body;
 
     if (!name) {
       return res.status(400).json({
@@ -163,6 +164,7 @@ exports.addDepartment = async (req, res) => {
 
     hospital.departments.push({
       name,
+      code: code || '',
       description: description || '',
       isActive: true
     });
@@ -188,7 +190,7 @@ exports.addDepartment = async (req, res) => {
 exports.updateDepartment = async (req, res) => {
   try {
     const { departmentId } = req.params;
-    const { name, description, isActive } = req.body;
+    const { name, code, description, isActive } = req.body;
 
     const hospital = await Hospital.findById(req.hospitalId);
     
@@ -209,6 +211,7 @@ exports.updateDepartment = async (req, res) => {
     }
 
     if (name) department.name = name;
+    if (code !== undefined) department.code = code;
     if (description !== undefined) department.description = description;
     if (isActive !== undefined) department.isActive = isActive;
 

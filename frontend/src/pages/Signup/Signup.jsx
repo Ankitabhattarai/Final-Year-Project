@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useApi } from "../../context/ApiContext";
 import { useAuth } from "../../context/AuthContext";
 import { GoogleLogin } from '@react-oauth/google';
+import { User, Mail, Lock, Eye, EyeOff, ArrowLeft, Sparkles } from 'lucide-react';
 import "./Signup.css";
 
 export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignupSuccess }) {
@@ -16,17 +17,15 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
 
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
-    }
-    if (successMessage) {
-      setSuccessMessage("");
     }
   };
 
@@ -47,10 +46,10 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
 
       if (data.success) {
         login(data.user, data.token);
-        setSuccessMessage("Account verified successfully! Redirecting...");
+        setSuccessMessage("Verification successful! Opening your workspace...");
         setTimeout(() => {
           onSignupSuccess();
-        }, 1000);
+        }, 1200);
       } else {
         setErrors({ general: data.message });
       }
@@ -66,31 +65,12 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
     e.preventDefault();
     const newErrors = {};
 
-    // Validate Full Name
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Please enter your full name";
-    }
-
-    // Validate Email
-    if (!formData.email.trim()) {
-      newErrors.email = "Please enter your email";
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
-    // Validate Password
-    if (!formData.password) {
-      newErrors.password = "Please enter a password";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    // Validate Confirm Password
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
+    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    else if (!validateEmail(formData.email)) newErrors.email = "Invalid email format";
+    if (!formData.password) newErrors.password = "Password is required";
+    else if (formData.password.length < 6) newErrors.password = "Minimum 6 characters";
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords match failed";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -107,121 +87,151 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
       });
 
       if (data.success) {
-        // Verify that a patient account was created
-        if (data.user.role !== 'patient') {
-          setErrors({ general: 'Error: Account was not created as a patient account. Please contact support.' });
-          return;
-        }
-
         login(data.user, data.token);
-
-        setSuccessMessage("Account created successfully! Redirecting...");
-
-        // Redirect to dashboard after 1 second
-        setTimeout(() => {
-          onSignupSuccess();
-        }, 1000);
+        setSuccessMessage("Account created! Experience the future of care.");
+        setTimeout(() => onSignupSuccess(), 1500);
       } else {
         setErrors({ general: data.message });
       }
     } catch (error) {
       console.error('Signup error:', error);
-      setErrors({ general: error.message || 'Network error. Please check if the server is running.' });
+      setErrors({ general: 'Connection lost. Please try again.' });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
-      <button className="back-button" onClick={onNavigateToLanding}>
-        ← Back to Home
+    <div className="auth-page">
+      <div className="noise" />
+      <div className="orb orb-1" />
+      <div className="orb orb-2" />
+
+      <button className="premium-back-btn" onClick={onNavigateToLanding}>
+        <ArrowLeft size={18} />
+        <span>Back</span>
       </button>
-      <div className="auth-card">
-        <div className="logo-container">
-          <div className="logo-box">H</div>
-          <span className="logo-title">Careline</span>
-        </div>
 
-        <h2 className="auth-title">Create Your Careline Account</h2>
-        <p className="auth-subtitle">Manage your hospital queue efficiently.</p>
+      <div className="auth-card-wrapper animate-in">
+        <div className="auth-card-premium">
+          <div className="auth-header">
+            <div className="premium-logo">
+              <div className="logo-mark-small">C</div>
+              <span className="logo-name-small">Care<span>line</span></span>
+            </div>
+            <h1 className="auth-headline">Join Careline</h1>
+            <p className="auth-subtext">Begin your journey with AI-powered healthcare management.</p>
+          </div>
 
-        {successMessage && (
-          <div className="success-message">{successMessage}</div>
-        )}
+          <div className="google-auth-section">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setErrors({ general: 'Google Verification Failed' })}
+              theme="outline"
+              shape="pill"
+              size="large"
+              width="100%"
+            />
+          </div>
 
-        {errors.general && (
-          <div className="error-message general-error">{errors.general}</div>
-        )}
+          <div className="divider">
+            <span className="divider-line"></span>
+            <span className="divider-text">OR CONTINUE WITH EMAIL</span>
+            <span className="divider-line"></span>
+          </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => setErrors({ general: 'Google Login Failed' })}
-          />
-        </div>
-        
-        <div style={{ textAlign: 'center', margin: '15px 0', color: '#6b7280', fontSize: '14px', position: 'relative' }}>
-          <span style={{ background: 'white', padding: '0 10px', position: 'relative', zIndex: 1 }}>OR SIGN UP WITH EMAIL</span>
-          <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: '#e5e7eb', zIndex: 0 }}></div>
-        </div>
+          <form className="premium-form" onSubmit={handleSubmit}>
+            <div className="input-group">
+              <label>Full Name</label>
+              <div className={`input-wrapper ${errors.fullName ? "error" : ""}`}>
+                <User className="input-icon" size={18} />
+                <input
+                  type="text"
+                  name="fullName"
+                  placeholder="John Doe"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                />
+              </div>
+              {errors.fullName && <p className="error-hint">{errors.fullName}</p>}
+            </div>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label className="auth-label">Full Name</label>
-          <input
-            className={`auth-input ${errors.fullName ? "error" : ""}`}
-            type="text"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            placeholder="Enter your full name"
-            disabled={isLoading}
-          />
-          {errors.fullName && <span className="error-message">{errors.fullName}</span>}
+            <div className="input-group">
+              <label>Email Address</label>
+              <div className={`input-wrapper ${errors.email ? "error" : ""}`}>
+                <Mail className="input-icon" size={18} />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                />
+              </div>
+              {errors.email && <p className="error-hint">{errors.email}</p>}
+            </div>
 
-          <label className="auth-label">Email</label>
-          <input
-            className={`auth-input ${errors.email ? "error" : ""}`}
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Enter your email"
-            disabled={isLoading}
-          />
-          {errors.email && <span className="error-message">{errors.email}</span>}
+            <div className="input-row">
+              <div className="input-group">
+                <label>Password</label>
+                <div className={`input-wrapper ${errors.password ? "error" : ""}`}>
+                  <Lock className="input-icon" size={18} />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                  />
+                  <button 
+                    type="button" 
+                    className="toggle-eye" 
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
 
-          <label className="auth-label">Password</label>
-          <input
-            className={`auth-input ${errors.password ? "error" : ""}`}
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Password"
-            disabled={isLoading}
-          />
-          {errors.password && <span className="error-message">{errors.password}</span>}
+              <div className="input-group">
+                <label>Confirm Password</label>
+                <div className={`input-wrapper ${errors.confirmPassword ? "error" : ""}`}>
+                  <Lock className="input-icon" size={18} />
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    placeholder="••••••••"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                  />
+                  <button 
+                    type="button" 
+                    className="toggle-eye" 
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+            {errors.password && <p className="error-hint">{errors.password}</p>}
+            {errors.confirmPassword && <p className="error-hint">{errors.confirmPassword}</p>}
 
-          <label className="auth-label">Confirm Password</label>
-          <input
-            className={`auth-input ${errors.confirmPassword ? "error" : ""}`}
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            placeholder="Confirm password"
-            disabled={isLoading}
-          />
-          {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+            {errors.general && <div className="general-alert">{errors.general}</div>}
+            {successMessage && <div className="success-alert"><Sparkles size={16} /> {successMessage}</div>}
 
-          <button type="submit" className="auth-btn" disabled={isLoading}>
-            {isLoading ? "Creating Account..." : "Sign Up"}
-          </button>
-        </form>
+            <button type="submit" className="premium-auth-btn" disabled={isLoading}>
+              {isLoading ? <div className="loader-small" /> : "Create Account"}
+            </button>
+          </form>
 
-        <div className="auth-switch">
-          Already have an account? <button onClick={onNavigateToLogin}>Log In</button>
+          <div className="auth-footer">
+            <p>Already have an account? <button onClick={onNavigateToLogin}>Log In</button></p>
+          </div>
         </div>
       </div>
     </div>

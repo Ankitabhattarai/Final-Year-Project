@@ -49,18 +49,26 @@ export default function PatientDashboard() {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const [hResp, qResp, sResp] = await Promise.all([
+      const [hResp, qResp] = await Promise.all([
         patientDashboardService.getHospitals(),
-        patientDashboardService.getMyQueue(),
-        patientDashboardService.getQuickSuggestion()
+        patientDashboardService.getMyQueue()
       ]);
       setHospitals(hResp.data || []);
       setMyQueue(qResp.data || []);
-      setQuickSuggestions(sResp.data || []);
+      fetchQuickSuggestions(selectedHospital);
     } catch (error) {
       console.error('Error fetching patient data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchQuickSuggestions = async (hospitalId = '') => {
+    try {
+      const resp = await patientDashboardService.getQuickSuggestion(hospitalId);
+      setQuickSuggestions(resp.data || []);
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
     }
   };
 
@@ -72,6 +80,13 @@ export default function PatientDashboard() {
       setSelectedDept('');
       setDoctors([]);
       setSelectedDoctor('');
+      fetchQuickSuggestions(selectedHospital);
+    } else if (!loading) {
+      setDepartments([]);
+      setSelectedDept('');
+      setDoctors([]);
+      setSelectedDoctor('');
+      fetchQuickSuggestions('');
     }
   }, [selectedHospital]);
 
@@ -187,7 +202,7 @@ export default function PatientDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl">
+      <div className="space-y-12">
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Patient Dashboard</h1>
@@ -293,14 +308,16 @@ export default function PatientDashboard() {
           </div>
         </div>
 
-   {/* Proactive Recommendations Section */}
+        {/* Proactive Recommendations Section */}
         {quickSuggestions && quickSuggestions.length > 0 && (
-          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-indigo-50 rounded-lg">
                 <Sparkles className="w-5 h-5 text-indigo-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-800">Recommended for You</h2>
+              <h2 className="text-2xl font-bold text-gray-800">
+                {selectedHospital ? 'Recommended Doctors at Selected Hospital' : 'Recommended Doctors Overall'}
+              </h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -309,7 +326,7 @@ export default function PatientDashboard() {
                 const waitTime = Math.round(suggestion.predicted_wait_min);
                 
                 return (
-                  <div key={idx} className="group relative bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all duration-300 flex flex-col h-full">
+                  <div key={idx} className="group relative bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all duration-300 flex flex-col h-full">
                     <div className="absolute top-4 right-4 text-indigo-100 group-hover:text-indigo-500 transition-colors">
                       <Sparkles size={24} />
                     </div>

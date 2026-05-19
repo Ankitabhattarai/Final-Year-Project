@@ -69,7 +69,7 @@ export default function DoctorDashboard() {
 
     return (
         <DashboardLayout>
-            <div className="space-y-6">
+            <div className="space-y-8">
                 {/* Header */}
                 <div className="flex justify-between items-start">
                     <div>
@@ -78,15 +78,15 @@ export default function DoctorDashboard() {
                     </div>
                     <button
                         onClick={fetchDashboardData}
-                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors bg-white rounded-lg border border-gray-200"
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors bg-white rounded-xl border border-slate-200"
                     >
                         <RefreshCw size={18} className={submitting ? 'animate-spin' : ''} />
                     </button>
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white rounded-xl border border-slate-200 p-6">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                                 <Users size={20} />
@@ -98,7 +98,7 @@ export default function DoctorDashboard() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <div className="bg-white rounded-xl border border-slate-200 p-6">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-green-50 text-green-600 rounded-lg">
                                 <CheckCircle size={20} />
@@ -110,7 +110,7 @@ export default function DoctorDashboard() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <div className="bg-white rounded-xl border border-slate-200 p-6">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
                                 <Activity size={20} />
@@ -126,7 +126,7 @@ export default function DoctorDashboard() {
                 {/* Main Content Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Now Serving */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="bg-white rounded-xl border border-slate-200 p-6">
                         <div className="mb-4">
                             <h2 className="text-lg font-semibold text-gray-900">Now Serving</h2>
                             <p className="text-xs text-gray-500 mt-1">Current patient being attended</p>
@@ -134,7 +134,7 @@ export default function DoctorDashboard() {
 
                         {nowServing ? (
                             <div>
-                                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                                <div className="bg-gray-50 rounded-xl p-4 mb-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Token</p>
@@ -176,7 +176,7 @@ export default function DoctorDashboard() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-gray-50 rounded-lg p-8 text-center">
+                            <div className="bg-gray-50 rounded-xl p-8 text-center">
                                 <p className="text-gray-500 text-sm mb-3">No patient currently being served</p>
                                 {upcoming.length > 0 && (
                                     <button
@@ -192,13 +192,13 @@ export default function DoctorDashboard() {
                     </div>
 
                     {/* Upcoming Patients */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="bg-white rounded-xl border border-slate-200 p-6">
                         <div className="mb-4">
                             <h2 className="text-lg font-semibold text-gray-900">Upcoming Patients</h2>
                             <p className="text-xs text-gray-500 mt-1">Next patients in queue</p>
                         </div>
 
-                        <div className="bg-gray-50 rounded-lg overflow-hidden">
+                        <div className="bg-gray-50 rounded-xl overflow-hidden">
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-gray-200 bg-gray-100">
@@ -229,7 +229,7 @@ export default function DoctorDashboard() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 flex flex-col shadow-sm">
+                    <div className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col shadow-sm">
                         <div className="mb-4">
                             <h2 className="text-lg font-semibold text-gray-900">Queue Volume</h2>
                             <p className="text-xs text-gray-500 mt-1">Daily patient statistics</p>
@@ -250,7 +250,7 @@ export default function DoctorDashboard() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 flex flex-col shadow-sm ">
+                    <div className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col shadow-sm">
                         <div className="mb-4">
                             <h2 className="text-lg font-semibold text-gray-900">Service Performance</h2>
                             <p className="text-xs text-gray-500 mt-1">Monthly throughput overview</p>

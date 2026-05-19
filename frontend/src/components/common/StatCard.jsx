@@ -3,7 +3,7 @@ import React from 'react';
 const StatCard = ({ title, value, icon }) => {
     return (
         <div className="cl-card p-6 flex items-start gap-4 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 group">
-            <div className="p-4 bg-primary/5 text-primary rounded-2xl group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm border border-primary/10">
+            <div className="p-4 bg-primary/5 text-primary rounded-xl group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm border border-primary/10">
                 {React.cloneElement(icon, { size: 24, strokeWidth: 2.5 })}
             </div>
             <div className="flex-1">

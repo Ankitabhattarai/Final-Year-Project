@@ -7,13 +7,13 @@ export default function HospitalDetailModal({ hospital, onClose, onProcess }) {
     return (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
             <div
-                className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden relative animate-in fade-in zoom-in duration-300"
+                className="bg-white w-full max-w-4xl rounded-xl shadow-2xl border border-slate-100 overflow-hidden relative animate-in fade-in zoom-in duration-300"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header Section */}
                 <div className="bg-slate-50 border-b border-slate-100 p-8 flex items-center justify-between">
                     <div className="flex items-center gap-6">
-                        <div className="w-20 h-20 rounded-3xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-100">
+                        <div className="w-20 h-20 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-100">
                             <Building2 size={40} />
                         </div>
                         <div>
@@ -34,7 +34,7 @@ export default function HospitalDetailModal({ hospital, onClose, onProcess }) {
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-3 bg-white hover:bg-slate-100 rounded-2xl text-slate-400 hover:text-slate-600 transition-all border border-slate-100 shadow-sm"
+                        className="p-3 bg-white hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition-all border border-slate-100 shadow-sm"
                     >
                         <X size={24} />
                     </button>
@@ -61,7 +61,7 @@ export default function HospitalDetailModal({ hospital, onClose, onProcess }) {
                         {/* Column 2: Location & Facilities */}
                         <div className="space-y-10">
                             <DetailSection title="Location" icon={<MapPin size={18} />}>
-                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                                     <p className="text-slate-700 font-bold mb-1">{hospital.address.street}</p>
                                     <p className="text-slate-500 font-medium">{hospital.address.city}, {hospital.address.state} {hospital.address.zipCode}</p>
                                     <p className="text-slate-400 text-xs font-bold uppercase mt-2 tracking-widest">{hospital.address.country}</p>
@@ -110,13 +110,13 @@ export default function HospitalDetailModal({ hospital, onClose, onProcess }) {
                             <>
                                 <button
                                     onClick={() => onProcess(hospital._id, 'approved')}
-                                    className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-sm transition-all shadow-xl shadow-emerald-100"
+                                    className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-sm transition-all shadow-xl shadow-emerald-100"
                                 >
                                     Approve Request
                                 </button>
                                 <button
                                     onClick={() => onProcess(hospital._id, 'rejected')}
-                                    className="px-8 py-3 bg-white hover:bg-rose-50 text-rose-600 border border-rose-100 font-black rounded-2xl text-sm transition-all"
+                                    className="px-8 py-3 bg-white hover:bg-rose-50 text-rose-600 border border-rose-100 font-black rounded-xl text-sm transition-all"
                                 >
                                     Reject
                                 </button>
@@ -125,11 +125,11 @@ export default function HospitalDetailModal({ hospital, onClose, onProcess }) {
                         {hospital.status !== 'pending' && (
                             <button
                                 onClick={() => onProcess(hospital._id, hospital.status === 'approved' ? 'rejected' : 'approved')}
-                                className={`px-8 py-3 rounded-2xl text-sm font-black transition-all border ${hospital.status === 'approved'
+                                className={`px-8 py-3 rounded-xl text-sm font-black transition-all border ${hospital.status === 'approved'
                                     ? 'bg-rose-50 border-rose-100 text-rose-600 hover:bg-rose-100'
                                     : 'bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100'
                                     }`}
-                            >
+                             >
                                 {hospital.status === 'approved' ? 'Revoke Partnership' : 'Re-Approve Partnership'}
                             </button>
                         )}
@@ -176,7 +176,7 @@ function InfoItem({ label, value, isCopyable, isLink, href, icon, color }) {
 
 function CapacityItem({ label, value, color }) {
     return (
-        <div className={`${color} p-4 rounded-2xl border border-current border-opacity-10 text-center`}>
+        <div className={`${color} p-4 rounded-xl border border-current border-opacity-10 text-center`}>
             <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">{label}</p>
             <p className="text-2xl font-black">{value}</p>
         </div>

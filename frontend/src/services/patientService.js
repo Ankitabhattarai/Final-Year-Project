@@ -13,6 +13,12 @@ const patientService = {
             params
         });
         return response.data;
+    },
+    createPatient: async (patientData) => {
+        const response = await axios.post(`${API_BASE_URL}/patients`, patientData, {
+            headers: getAuthHeader()
+        });
+        return response.data;
     }
 };
 

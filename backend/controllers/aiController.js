@@ -9,7 +9,8 @@ const Queue = require('../models/Queue');
 const runPythonScript = (scriptName, inputData) => {
     return new Promise((resolve, reject) => {
         const scriptPath = path.join(__dirname, '../../ai', scriptName);
-        const pythonProcess = spawn('python', [scriptPath, JSON.stringify(inputData)]);
+        const pythonCmd = process.platform === 'win32' ? 'py' : 'python';
+        const pythonProcess = spawn(pythonCmd, [scriptPath, JSON.stringify(inputData)]);
         
         let dataStr = '';
         let errorStr = '';
@@ -108,7 +109,8 @@ exports.getRecommendations = async (req, res) => {
             hospitalId,
             role: 'doctor',
             'employeeDetails.department': department,
-            isActive: true
+            isActive: true,
+            'employeeDetails.isActive': true
         });
 
         if (doctors.length === 0) {
@@ -175,41 +177,56 @@ exports.getRecommendations = async (req, res) => {
 exports.getQuickSuggestion = async (req, res) => {
     try {
         const Hospital = require('../models/Hospital');
+        const queryHospitalId = req.query.hospitalId;
         
-        // 1. Find the first hospital if none is specified (or could be based on user location/history)
-        const hospital = await Hospital.findOne({ isActive: true });
-        if (!hospital) {
-            return res.json({ success: true, data: null });
+        let hospitalMatch = {};
+        
+        // 1. Find hospitals to pull suggestions from
+        if (queryHospitalId) {
+            const hospital = await Hospital.findById(queryHospitalId);
+            if (!hospital || !hospital.isActive) {
+                return res.json({ success: true, data: [] });
+            }
+            hospitalMatch.hospitalId = hospital._id;
+        } else {
+            const activeHospitals = await Hospital.find({ isActive: true }).select('_id');
+            if (activeHospitals.length === 0) {
+                return res.json({ success: true, data: [] });
+            }
+            const activeHospitalIds = activeHospitals.map(h => h._id);
+            hospitalMatch.hospitalId = { $in: activeHospitalIds };
         }
 
         // 2. Define priority departments for quick suggestions
         const priorityDepts = ['General Medicine', 'Internal Medicine', 'Emergency', 'Cardiology'];
         
-        // 3. Find doctors in these departments at this hospital
+        // 3. Find doctors in these departments
         let doctors = await User.find({
-            hospitalId: hospital._id,
+            ...hospitalMatch,
             role: 'doctor',
             'employeeDetails.department': { $in: priorityDepts },
-            isActive: true
-        });
+            isActive: true,
+            'employeeDetails.isActive': true
+        }).populate('hospitalId');
 
         // If no doctors in priority depts, just get any doctors
         if (doctors.length === 0) {
             doctors = await User.find({
-                hospitalId: hospital._id,
+                ...hospitalMatch,
                 role: 'doctor',
-                isActive: true
-            }).limit(5);
+                isActive: true,
+                'employeeDetails.isActive': true
+            }).populate('hospitalId').limit(8);
         }
 
         if (doctors.length === 0) {
-            return res.json({ success: true, data: null });
+            return res.json({ success: true, data: [] });
         }
 
         // 4. Prepare data for the recommendation engine
         const options = await Promise.all(doctors.map(async (doc) => {
             const queueLength = await Queue.countDocuments({
-                hospitalId: hospital._id,
+                hospitalId: doc.hospitalId._id,
                 doctorId: doc._id,
                 status: 'waiting'
             });
@@ -232,8 +249,8 @@ exports.getQuickSuggestion = async (req, res) => {
                 doctor_name: doc.fullName,
                 specialization: doc.employeeDetails.specialization,
                 department: doc.employeeDetails.department,
-                hospital_name: hospital.name,
-                hospital_id: hospital._id.toString(),
+                hospital_name: doc.hospitalId.name,
+                hospital_id: doc.hospitalId._id.toString(),
                 queue_length: queueLength,
                 avg_consult_time: avgConsultTime,
                 predicted_wait_min: predictedWaitMin,

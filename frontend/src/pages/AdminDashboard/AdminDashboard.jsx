@@ -84,7 +84,7 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
@@ -110,7 +110,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <DashboardStatCard
             label="Total Patients Today"
             value={metrics?.totalPatientsToday.value}
@@ -146,8 +146,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Charts Grid */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-10">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div className="grid lg:grid-cols-2 gap-6 mb-12">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
             <h3 className="text-lg font-bold text-slate-800 mb-6">Patient Flow Trending</h3>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
             <h3 className="text-lg font-bold text-slate-800 mb-6">Avg Wait by Department</h3>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
@@ -191,7 +191,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Real-time Queue Status */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-10">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-12">
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-slate-800">Current Queue Status</h3>
@@ -213,7 +213,7 @@ function DashboardStatCard({ label, value, change, changeText, icon, color, bgCo
   const isPositive = change >= 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg transition-all transform hover:-translate-y-1">
+    <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-lg transition-all transform hover:-translate-y-1">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{label}</p>

@@ -64,7 +64,7 @@ exports.createUser = async (req, res) => {
     if (employeeDetails) {
         userData.employeeDetails = {
             ...employeeDetails,
-            isActive: true,
+            isActive: employeeDetails.isActive !== undefined ? employeeDetails.isActive : true,
             joinDate: new Date()
         };
     }
@@ -108,11 +108,21 @@ exports.updateUser = async (req, res) => {
     }
     
     if (profile) {
-        user.profile = { ...user.profile, ...profile };
+        if (!user.profile) user.profile = {};
+        for (const key in profile) {
+            if (profile[key] !== undefined) {
+                user.profile[key] = profile[key];
+            }
+        }
     }
 
     if (employeeDetails) {
-        user.employeeDetails = { ...user.employeeDetails, ...employeeDetails };
+        if (!user.employeeDetails) user.employeeDetails = {};
+        for (const key in employeeDetails) {
+            if (employeeDetails[key] !== undefined) {
+                user.employeeDetails[key] = employeeDetails[key];
+            }
+        }
     }
     
     // Toggle availability

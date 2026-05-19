@@ -121,22 +121,22 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto">
+      <div className="space-y-8">
         {/* Page Header */}
         <div className="mb-10">
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Account Settings</h1>
           <p className="text-slate-500 mt-1">Manage your profile, security settings, and communication preferences.</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Sidebar / Profile Card */}
           <div className="lg:col-span-4 space-y-6">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="h-24 bg-gradient-to-r from-blue-600 to-indigo-700"></div>
               <div className="px-6 pb-6">
                 <div className="relative -mt-12 flex justify-center">
                   <div className="relative group">
-                    <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-xl flex items-center justify-center text-blue-600 text-4xl font-black overflow-hidden bg-slate-100">
+                    <div className="w-24 h-24 rounded-xl bg-white border-4 border-white shadow-xl flex items-center justify-center text-blue-600 text-4xl font-black overflow-hidden bg-slate-100">
                       {name ? name.charAt(0).toUpperCase() : 'U'}
                     </div>
                    
@@ -165,7 +165,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Quick Navigation Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 hidden lg:block">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 hidden lg:block">
               <nav className="space-y-1">
                 <a href="#profile" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-50 text-blue-700 font-semibold transition-all">
                   <User size={18} />
@@ -183,7 +183,7 @@ export default function SettingsPage() {
           <div className="lg:col-span-8 space-y-8">
             
             {/* Profile Section */}
-            <section id="profile" className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <section id="profile" className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
@@ -243,7 +243,7 @@ export default function SettingsPage() {
             </section>
 
             {/* Security Section */}
-            <section id="security" className={`bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 ${isSecurityOpen ? 'ring-2 ring-indigo-500/20' : ''}`}>
+            <section id="security" className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 ${isSecurityOpen ? 'ring-2 ring-indigo-500/20' : ''}`}>
               <div 
                 className="px-8 py-6 cursor-pointer hover:bg-slate-50 transition-colors flex items-center justify-between"
                 onClick={() => setIsSecurityOpen(!isSecurityOpen)}

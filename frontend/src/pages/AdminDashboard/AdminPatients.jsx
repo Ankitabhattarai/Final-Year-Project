@@ -41,7 +41,7 @@ export default function AdminPatients() {
 
     return (
         <DashboardLayout>
-            <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="space-y-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Platform Patients</h1>
@@ -52,14 +52,14 @@ export default function AdminPatients() {
                         <input
                             type="text"
                             placeholder="Search by name or email..."
-                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 transition-all outline-none text-slate-700 font-medium"
+                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 transition-all outline-none text-slate-700 font-medium"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                 </div>
 
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>

@@ -72,6 +72,26 @@ exports.createPatient = async (req, res) => {
     const patientCount = await Patient.countDocuments({ hospitalId });
     const patientId = `P-${String(patientCount + 1).padStart(5, '0')}`;
 
+    // Provide default fallback values to satisfy Mongoose schema validation if missing
+    const addressData = address || {
+      street: 'Street',
+      city: 'Kathmandu',
+      state: 'Bagmati',
+      zipCode: '44600'
+    };
+    if (!addressData.city) addressData.city = 'Kathmandu';
+    if (!addressData.state) addressData.state = 'Bagmati';
+    if (!addressData.street) addressData.street = 'Street';
+
+    const emergencyContactData = emergencyContact || {
+      name: 'Self',
+      relationship: 'Self',
+      phone: phone
+    };
+    if (!emergencyContactData.name) emergencyContactData.name = 'Self';
+    if (!emergencyContactData.relationship) emergencyContactData.relationship = 'Self';
+    if (!emergencyContactData.phone) emergencyContactData.phone = phone;
+
     const newPatient = new Patient({
       patientId,
       hospitalId,
@@ -80,8 +100,8 @@ exports.createPatient = async (req, res) => {
       phone,
       dateOfBirth,
       gender,
-      address,
-      emergencyContact
+      address: addressData,
+      emergencyContact: emergencyContactData
     });
 
     await newPatient.save();

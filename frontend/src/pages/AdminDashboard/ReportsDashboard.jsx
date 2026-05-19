@@ -92,7 +92,7 @@ export default function ReportsDashboard() {
         <DashboardLayout>
             <div className="space-y-8">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">Hospital Analytics</h1>
                         <p className="text-slate-500 text-sm mt-1">Monitor performance, patient flow, and service metrics</p>
@@ -149,9 +149,9 @@ export default function ReportsDashboard() {
                     />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Weekly Trends */}
-                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                         <div className="flex items-center justify-between mb-8">
                             <h3 className="font-bold text-slate-800 flex items-center gap-2">
                                 <TrendingUp className="text-blue-500" size={20} />
@@ -180,7 +180,7 @@ export default function ReportsDashboard() {
                     </div>
 
                     {/* Busiest Hours */}
-                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                         <div className="flex items-center justify-between mb-8">
                             <h3 className="font-bold text-slate-800 flex items-center gap-2">
                                 <BarChart3 className="text-amber-500" size={20} />
@@ -204,9 +204,9 @@ export default function ReportsDashboard() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Wait Time Trends */}
-                    <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                         <h3 className="font-bold text-slate-800 mb-8">Average Wait Time Trend (min)</h3>
                         <div className="h-80">
                             <ResponsiveContainer width="100%" height="100%">
@@ -224,7 +224,7 @@ export default function ReportsDashboard() {
                     </div>
 
                     {/* Status Distribution */}
-                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                         <h3 className="font-bold text-slate-800 mb-8">Appointment Status</h3>
                         <div className="h-80">
                             <ResponsiveContainer width="100%" height="100%">
@@ -257,7 +257,7 @@ export default function ReportsDashboard() {
 
 function StatCard({ title, value, icon, trend, color }) {
     return (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-start justify-between">
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-start justify-between">
             <div>
                 <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">{title}</p>
                 <h4 className="text-3xl font-bold text-slate-900 mt-2">{value}</h4>

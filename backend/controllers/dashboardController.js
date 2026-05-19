@@ -280,7 +280,6 @@ exports.getQueueStatus = async (req, res) => {
 
     const queueStatus = await Queue.find({
       hospitalId,
-      scheduledTime: { $gte: today, $lt: tomorrow },
       status: { $in: ['waiting', 'in_progress'] }
     })
     .populate('patientId', 'fullName phone')
