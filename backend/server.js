@@ -39,10 +39,10 @@ connectDB();
 // Middleware
 const corsOptions = {
   origin: (origin, callback) => {
-    if (isOriginAllowed(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error('Origin not allowed by CORS'));
+    const allowed = isOriginAllowed(origin);
+    // Helpful debug: log incoming origin and allowed origins when troubleshooting
+    console.log('CORS check - origin:', origin, 'normalized:', normalizeOrigin(origin), 'allowed:', allowed);
+    return callback(null, allowed);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
