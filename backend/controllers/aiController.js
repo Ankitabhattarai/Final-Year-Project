@@ -150,7 +150,22 @@ exports.getRecommendations = async (req, res) => {
             };
         }));
 
-        const result = await runPythonScript('recommend.py', options);
+        let result;
+        try {
+            result = await runPythonScript('recommend.py', options);
+        } catch (pyErr) {
+            console.warn('Python recommendation script failed, falling back to JS sorting:', pyErr.message || pyErr);
+            // Fallback: sort options by our predicted_wait_min and return
+            const sorted = options.slice().sort((a, b) => a.predicted_wait_min - b.predicted_wait_min);
+            const enhancedResults = sorted.map(opt => ({ ...opt, predicted_wait_min: opt.predicted_wait_min }));
+            return res.json({
+                success: true,
+                data: {
+                    recommended: enhancedResults[0] || null,
+                    all_results: enhancedResults
+                }
+            });
+        }
 
         // Ensure all results have the calculated fields
         const enhancedResults = result.all_results ? result.all_results.map(r => ({
