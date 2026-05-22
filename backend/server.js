@@ -40,6 +40,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+// Also expose auth routes without the `/api` prefix to be tolerant
+// of frontends that may be configured without the `/api` suffix.
+app.use('/auth', require('./routes/auth'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/admin/system', require('./routes/superAdminRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
