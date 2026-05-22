@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useApi } from "../../context/ApiContext";
 import { useAuth } from "../../context/AuthContext";
-import { GoogleLogin } from '@react-oauth/google';
+// GoogleLogin removed - using standard email/password signup only
 import { User, Mail, Lock, Eye, EyeOff, ArrowLeft, Sparkles } from 'lucide-react';
 import "./Signup.css";
 
@@ -34,32 +34,7 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
     return emailRegex.test(email);
   };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    setIsLoading(true);
-    setErrors({});
-
-    try {
-      const data = await apiFetch('/auth/google', {
-        method: 'POST',
-        body: JSON.stringify({ credential: credentialResponse.credential }),
-      });
-
-      if (data.success) {
-        login(data.user, data.token);
-        setSuccessMessage("Verification successful! Opening your workspace...");
-        setTimeout(() => {
-          onSignupSuccess();
-        }, 1200);
-      } else {
-        setErrors({ general: data.message });
-      }
-    } catch (error) {
-      console.error('Google signup error:', error);
-      setErrors({ general: error.message || 'Verification failed.' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Google signup removed. Use email/password form below.
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,17 +98,7 @@ export default function Signup({ onNavigateToLogin, onNavigateToLanding, onSignu
             <p className="auth-subtext">Begin your journey with AI-powered healthcare management.</p>
           </div>
 
-          <div className="google-auth-section">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => setErrors({ general: 'Google Verification Failed' })}
-              theme="outline"
-              shape="pill"
-              size="large"
-              width="100%"
-            />
-          </div>
-
+          {/* Google signup removed */}
           <div className="divider">
             <span className="divider-line"></span>
             <span className="divider-text">OR CONTINUE WITH EMAIL</span>

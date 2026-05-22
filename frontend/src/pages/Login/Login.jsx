@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useApi } from "../../context/ApiContext";
 import { useAuth } from "../../context/AuthContext";
-import { GoogleLogin } from '@react-oauth/google';
+// GoogleLogin removed - using standard email/password auth only
 import { Mail, Lock, Eye, EyeOff, ArrowLeft, Sparkles } from 'lucide-react';
 import "./Login.css";
 
@@ -32,30 +32,7 @@ export default function Login({ onNavigateToSignup, onNavigateToLanding, onLogin
     return emailRegex.test(email);
   };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    setIsLoading(true);
-    setErrors({});
-
-    try {
-      const data = await apiFetch('/auth/google', {
-        method: 'POST',
-        body: JSON.stringify({ credential: credentialResponse.credential }),
-      });
-
-      if (data.success) {
-        login(data.user, data.token);
-        setSuccessMessage(`Welcome, ${data.user.fullName}! Redirecting...`);
-        onLoginSuccess(data.user);
-      } else {
-        setErrors({ general: data.message });
-      }
-    } catch (error) {
-      console.error('Google login error:', error);
-      setErrors({ general: error.message || 'Verification failed.' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Google sign-in removed. Use email/password form below.
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -122,17 +99,7 @@ export default function Login({ onNavigateToSignup, onNavigateToLanding, onLogin
             <p className="auth-subtext">Efficiency starts with a single sign-in.</p>
           </div>
 
-          <div className="google-auth-section">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => setErrors({ general: 'Google Verification Failed' })}
-              theme="outline"
-              shape="pill"
-              size="large"
-              width="100%"
-            />
-          </div>
-
+          {/* Google sign-in removed */}
           <div className="divider">
             <span className="divider-line"></span>
             <span className="divider-text">OR SIGN IN WITH EMAIL</span>
