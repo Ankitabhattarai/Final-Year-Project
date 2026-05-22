@@ -1,16 +1,86 @@
-# React + Vite
+# Careline Deployment Guide
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This repository is split into:
 
-Currently, two official plugins are available:
+- `frontend/`: Vite + React app (deploy to Vercel)
+- `backend/`: Express + MongoDB API (deploy to Render)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 1. Backend Deployment (Render)
 
-## React Compiler
+### Render Blueprint (recommended)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Push this repository to GitHub.
+2. In Render, choose **New +** -> **Blueprint**.
+3. Select your repository.
+4. Render will detect `backend/render.yaml`.
+5. Fill the required environment variables when prompted.
 
-## Expanding the ESLint configuration
+### Manual Web Service (alternative)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Create a new **Web Service** in Render.
+2. Set:
+	- Root Directory: `backend`
+	- Build Command: `npm install`
+	- Start Command: `npm start`
+3. Add environment variables listed below.
+
+### Required backend environment variables
+
+Use `backend/.env.example` as the template.
+
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `NODE_ENV=production`
+- `CORS_ORIGIN` (your Vercel frontend URL, or comma-separated list)
+- `FRONTEND_URL` (your Vercel frontend URL)
+- `GOOGLE_CLIENT_ID`
+- `GROQ_API_KEY`
+- `EMAIL_USER`
+- `EMAIL_PASS`
+
+Health check endpoint:
+
+- `GET /api/health`
+
+## 2. Frontend Deployment (Vercel)
+
+1. Import this repository into Vercel.
+2. Set **Root Directory** to `frontend`.
+3. Framework preset: **Vite**.
+4. Build command: `npm run build`.
+5. Output directory: `dist`.
+6. Add required environment variables.
+
+### Required frontend environment variables
+
+Use `frontend/.env.example` as the template.
+
+- `VITE_API_URL` (Render backend URL + `/api`, for example `https://your-backend.onrender.com/api`)
+- `VITE_GOOGLE_CLIENT_ID`
+
+`frontend/vercel.json` includes SPA rewrites so client-side routes resolve to `index.html`.
+
+## 3. Cross-service wiring
+
+After both are deployed:
+
+1. Copy your Vercel production URL.
+2. Set `CORS_ORIGIN` and `FRONTEND_URL` in Render to that URL.
+3. Copy your Render backend URL.
+4. Set `VITE_API_URL` in Vercel to `https://your-backend.onrender.com/api`.
+5. Redeploy both services.
+
+## 4. Local setup
+
+1. Backend:
+	- Copy `backend/.env.example` to `backend/.env`
+	- `npm install`
+	- `npm run dev`
+2. Frontend:
+	- Copy `frontend/.env.example` to `frontend/.env`
+	- `npm install`
+	- `npm run dev`
+
+## Security note
+
+If secrets were committed in `.env` files earlier, rotate them (API keys, email password, JWT secret, OAuth credentials) before production deployment.

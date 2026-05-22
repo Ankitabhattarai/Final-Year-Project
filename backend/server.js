@@ -5,12 +5,34 @@ const connectDB = require('./config/database');
 
 const app = express();
 
+const parseAllowedOrigins = () => {
+  const rawOrigins = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:5173';
+  return rawOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+};
+
+const allowedOrigins = parseAllowedOrigins();
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.includes('*')) return true;
+  return allowedOrigins.includes(origin);
+};
+
 // Connect to MongoDB
 connectDB();
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite default port
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(null, false);
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -60,7 +82,7 @@ const http = require('http');
 const { initSocket } = require('./utils/socket');
 
 const server = http.createServer(app);
-initSocket(server);
+initSocket(server, allowedOrigins);
 
 const PORT = process.env.PORT || 5000;
 

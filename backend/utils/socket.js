@@ -3,10 +3,16 @@ const socketIo = require('socket.io');
 let io;
 const userSockets = new Map(); // patientId -> socketId
 
-const initSocket = (server) => {
+const initSocket = (server, allowedOrigins = ['http://localhost:5173']) => {
   io = socketIo(server, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+        callback(new Error('Socket origin not allowed by CORS'));
+      },
       methods: ["GET", "POST"],
       credentials: true
     }
