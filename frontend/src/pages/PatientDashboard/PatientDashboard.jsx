@@ -367,14 +367,14 @@ export default function PatientDashboard() {
         )}
 
         {/* AI Recommended Slots */}
-        {/* {selectedDept && selectedHospital && (
+        {selectedDept && selectedHospital && (
           <div className="mb-12">
             <AIRecommendations
               department={departments.find(d => d._id === selectedDept)?.name}
               hospitalId={selectedHospital}
             />
           </div>
-        )} */}
+        )}
 
         {/* My Bookings */}
         <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm mb-12">
