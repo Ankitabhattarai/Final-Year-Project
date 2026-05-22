@@ -10,31 +10,48 @@ const parseAllowedOrigins = () => {
   return rawOrigins
     .split(',')
     .map((origin) => origin.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((o) => o.replace(/\/*$/, '').toLowerCase()); // normalize: remove trailing slash, lowercase
 };
 
 const allowedOrigins = parseAllowedOrigins();
 
+const normalizeOrigin = (origin) => {
+  if (!origin) return origin;
+  try {
+    // Some callers may pass origin with trailing slash — normalize similarly
+    return origin.replace(/\/*$/, '').toLowerCase();
+  } catch (e) {
+    return origin;
+  }
+};
+
 const isOriginAllowed = (origin) => {
-  if (!origin) return true;
+  if (!origin) return true; // allow non-browser (curl/server-to-server) requests
+  const n = normalizeOrigin(origin);
   if (allowedOrigins.includes('*')) return true;
-  return allowedOrigins.includes(origin);
+  return allowedOrigins.includes(n);
 };
 
 // Connect to MongoDB
 connectDB();
 
 // Middleware
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
     if (isOriginAllowed(origin)) {
-      callback(null, true);
-      return;
+      return callback(null, true);
     }
-    callback(null, false);
+    return callback(new Error('Origin not allowed by CORS'));
   },
-  credentials: true
-}));
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
+// Ensure preflight requests are handled
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

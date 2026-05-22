@@ -4,10 +4,14 @@ let io;
 const userSockets = new Map(); // patientId -> socketId
 
 const initSocket = (server, allowedOrigins = ['http://localhost:5173']) => {
+  // Normalize allowed origins (strip trailing slash and lowercase)
+  const normalizedAllowed = allowedOrigins.map(o => o.replace(/\/*$/, '').toLowerCase());
   io = socketIo(server, {
     cors: {
       origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+        if (!origin) return callback(null, true);
+        const n = origin.replace(/\/*$/, '').toLowerCase();
+        if (normalizedAllowed.includes('*') || normalizedAllowed.includes(n)) {
           callback(null, true);
           return;
         }
