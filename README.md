@@ -4,6 +4,7 @@ This repository is split into:
 
 - `frontend/`: Vite + React app (deploy to Vercel)
 - `backend/`: Express + MongoDB API (deploy to Render)
+- `ai/`: Python AI inference service (deploy to Render)
 
 ## 1. Backend Deployment (Render)
 
@@ -14,6 +15,8 @@ This repository is split into:
 3. Select your repository.
 4. Render will detect `backend/render.yaml`.
 5. Fill the required environment variables when prompted.
+
+The Render blueprint also creates a separate Python AI service in `ai/` that the backend calls for doctor recommendations.
 
 ### Manual Web Service (alternative)
 
@@ -37,10 +40,28 @@ Use `backend/.env.example` as the template.
 - `GROQ_API_KEY`
 - `EMAIL_USER`
 - `EMAIL_PASS`
+- `AI_SERVICE_URL` (the Render URL of the Python AI service, for example `https://your-ai-service.onrender.com`)
 
 Health check endpoint:
 
 - `GET /api/health`
+
+### AI service deployment (Render)
+
+The AI service runs from `ai/app.py` and exposes:
+
+- `GET /api/health`
+- `POST /api/ai/predict`
+- `POST /api/ai/recommend`
+- `POST /api/ai/quick-suggestion`
+
+Render blueprint settings for the AI service:
+
+- Root Directory: `ai`
+- Build Command: `pip install -r requirements.txt && python train_model.py`
+- Start Command: `gunicorn app:app --bind 0.0.0.0:$PORT`
+
+After deployment, copy the AI service URL into the backend `AI_SERVICE_URL` variable and redeploy the backend.
 
 ## 2. Frontend Deployment (Vercel)
 
@@ -68,7 +89,9 @@ After both are deployed:
 2. Set `CORS_ORIGIN` and `FRONTEND_URL` in Render to that URL.
 3. Copy your Render backend URL.
 4. Set `VITE_API_URL` in Vercel to `https://your-backend.onrender.com/api`.
-5. Redeploy both services.
+5. Copy your AI service URL from Render.
+6. Set `AI_SERVICE_URL` in the backend to that AI URL.
+7. Redeploy both services.
 
 ## 4. Local setup
 

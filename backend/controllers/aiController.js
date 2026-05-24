@@ -3,6 +3,8 @@ const path = require('path');
 const User = require('../models/User');
 const Queue = require('../models/Queue');
 
+const aiServiceBaseUrl = process.env.AI_SERVICE_URL || '';
+
 /**
  * Helper to call Python scripts
  */
@@ -36,6 +38,36 @@ const runPythonScript = (scriptName, inputData) => {
     });
 };
 
+const callAiService = async (endpointPath, payload) => {
+    if (!aiServiceBaseUrl) {
+        throw new Error('AI service URL is not configured');
+    }
+
+    const url = new URL(endpointPath, aiServiceBaseUrl);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+
+        const data = await response.json();
+        if (!response.ok || data.success === false) {
+            throw new Error(data.message || `AI service returned ${response.status}`);
+        }
+
+        return data.data ?? data;
+    } finally {
+        clearTimeout(timeout);
+    }
+};
+
 /**
  * GET wait time prediction for a specific doctor
  */
@@ -53,6 +85,11 @@ exports.predictWaitTime = async (req, res) => {
         // Fetch doctor to get their speed
         const doctor = await User.findById(doctorId);
         const avgConsultTime = doctor?.employeeDetails?.avgConsultationTime || 15;
+        const queueLength = Number(req.query.queueLength) || await Queue.countDocuments({
+            hospitalId,
+            doctorId,
+            status: 'waiting'
+        });
         
         const now = new Date();
         const availableAtDate = new Date(now.getTime() + (queueLength * avgConsultTime) * 60000);
@@ -72,7 +109,17 @@ exports.predictWaitTime = async (req, res) => {
             department_id: departmentId 
         };
 
-        const result = await runPythonScript('predict.py', inputData);
+        let result;
+        if (aiServiceBaseUrl) {
+            try {
+                result = await callAiService('/api/ai/predict', inputData);
+            } catch (serviceError) {
+                console.warn('AI service predict failed, falling back to local script:', serviceError.message || serviceError);
+                result = await runPythonScript('predict.py', inputData);
+            }
+        } else {
+            result = await runPythonScript('predict.py', inputData);
+        }
         
         res.json({
             success: true,
@@ -151,20 +198,15 @@ exports.getRecommendations = async (req, res) => {
         }));
 
         let result;
-        try {
+        if (aiServiceBaseUrl) {
+            try {
+                result = await callAiService('/api/ai/recommend', options);
+            } catch (serviceError) {
+                console.warn('AI service recommendation failed, falling back to local script:', serviceError.message || serviceError);
+                result = await runPythonScript('recommend.py', options);
+            }
+        } else {
             result = await runPythonScript('recommend.py', options);
-        } catch (pyErr) {
-            console.warn('Python recommendation script failed, falling back to JS sorting:', pyErr.message || pyErr);
-            // Fallback: sort options by our predicted_wait_min and return
-            const sorted = options.slice().sort((a, b) => a.predicted_wait_min - b.predicted_wait_min);
-            const enhancedResults = sorted.map(opt => ({ ...opt, predicted_wait_min: opt.predicted_wait_min }));
-            return res.json({
-                success: true,
-                data: {
-                    recommended: enhancedResults[0] || null,
-                    all_results: enhancedResults
-                }
-            });
         }
 
         // Ensure all results have the calculated fields
@@ -279,13 +321,27 @@ exports.getQuickSuggestion = async (req, res) => {
         }));
 
         // 5. Use the recommendation script to sort them (still based on predicted_wait_min)
-        const result = await runPythonScript('recommend.py', options);
+        let result;
+        if (aiServiceBaseUrl) {
+            try {
+                result = await callAiService('/api/ai/quick-suggestion', options);
+            } catch (serviceError) {
+                console.warn('AI service quick suggestion failed, falling back to local script:', serviceError.message || serviceError);
+                result = await runPythonScript('recommend.py', options);
+            }
+        } else {
+            result = await runPythonScript('recommend.py', options);
+        }
         
         // Return top 4 results with our enhanced fields
-        const top4 = result.all_results ? result.all_results.slice(0, 4).map(r => ({
-            ...r.option,
+        const sourceResults = Array.isArray(result)
+            ? result
+            : (result.all_results || result.data || []);
+
+        const top4 = sourceResults.slice(0, 4).map((r) => ({
+            ...(r.option || r),
             predicted_wait_min: r.predicted_wait_min // use script result or our calc
-        })) : [];
+        }));
         
         res.json({
             success: true,
