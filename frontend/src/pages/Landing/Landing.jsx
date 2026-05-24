@@ -61,9 +61,6 @@ export default function Landing({ onNavigateToLogin, onNavigateToSignup }) {
               <button className="btn-hero-primary" onClick={onNavigateToSignup}>
                 Start for Free →
               </button>
-              <button className="btn-hero-ghost">
-                <span>▶</span> Watch Demo
-              </button>
             </div>
             <div className="hero-stats">
               <div className="stat">
